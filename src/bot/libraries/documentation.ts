@@ -61,21 +61,25 @@ export class Documentation {
      * Returns a string with the full detailed help information for a command.
      */
     public static getCommandHelp(command: Command) : RichEmbed {
+        let fields = [{
+            name: 'Usage',
+            value: '`' + this.getInlineUsage(command) + '`'
+        }];
+
+        // If there are arguments, add it to the fields
+        if (command.getArguments().length > 0) {
+            fields.push({
+                name: 'Arguments',
+                value: Documentation.getArgumentDetails(command)
+            });
+        }
+
         // Build the embed
         let embed = new RichEmbed({
             description: command.getDescription() + '\n',
             color: 0x1c7ed6,
             author: { name: 'Help for ' + command.getName() },
-            fields: [
-                {
-                    name: 'Usage',
-                    value: '`' + this.getInlineUsage(command) + '`'
-                },
-                {
-                    name: 'Arguments',
-                    value: Documentation.getArgumentDetails(command)
-                }
-            ]
+            fields: fields
         });
 
         return embed;
