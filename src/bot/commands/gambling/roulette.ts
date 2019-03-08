@@ -1,18 +1,19 @@
-import { Command, Input } from "@api";
-import { Emoji } from "@bot/libraries/emoji";
+import {Command, Input} from "@api";
+import {Emoji} from "@bot/libraries/emoji";
 import * as Jimp from 'jimp';
-import { Betting } from "@bot/libraries/betting";
-import { Message } from "discord.js";
-import { Reactions, ReactionListener } from "@bot/libraries/reactions";
-import { GuildMember } from "discord.js";
-import { Economy } from "@bot/libraries/economy";
-import { TextChannel } from "discord.js";
+import {Betting} from "@bot/libraries/betting";
+import {Message} from "discord.js";
+import {Reactions, ReactionListener} from "@bot/libraries/reactions";
+import {GuildMember} from "discord.js";
+import {Economy} from "@bot/libraries/economy";
+import {TextChannel} from "discord.js";
+import {Timer} from "@libraries/utilities/timer";
 
 const sharp = require('sharp');
 const randomNumber = require('random-number-csprng');
 
 let base = sharp(pub('roulette/wheel.png'));
-let pointer : any;
+let pointer: any;
 
 const tiles = [10, 5, 1, 2, 1, 5, 1, 10, 1, 2, 1, 20, 1, 2, 1];
 
@@ -53,8 +54,8 @@ export class Roulette extends Command {
         let countdownMessage = await input.channel.send(`_ _\n${Emoji.LOADING}  **Spinning** in 30 seconds...`) as Message;
 
         // Listen for bets
-        let bets : {[id: string]: Bet} = {};
-        let listeners : ReactionListener[] = [];
+        let bets: { [id: string]: Bet } = {};
+        let listeners: ReactionListener[] = [];
 
         reservation.on('bet', async (member, amount) => {
             let message = await input.channel.send(`:sparkles:  ${member} You are betting **$${amount.toFixed(2)}**. Please select the number to bet on.`) as Message;
@@ -98,7 +99,13 @@ export class Roulette extends Command {
         });
 
         // Count down
-        await this.countdown(countdownMessage, startTime);
+
+        let countdown = new Timer(startTime, async function(remaining) {
+            await countdownMessage.edit(`_ _\n${Emoji.LOADING}  **Spinning** in ${remaining} seconds...`);
+        });
+        countdown.run();
+        await countdown.wait();
+        await countdownMessage.edit(`${Emoji.LOADING}  **Spinning** now...`);
 
         // Close all reaction listeners
         _.each(listeners, listener => {
@@ -121,7 +128,8 @@ export class Roulette extends Command {
             await welcomeMessages[1].delete();
             await countdownMessage.delete();
         }
-        catch (err) {}
+        catch (err) {
+        }
 
         // Stop if there aren't any bets
         if (validBets == 0) {
@@ -133,7 +141,7 @@ export class Roulette extends Command {
         }
 
         // Post the resulting wheel
-        await input.channel.send({ files: [ spunWheel ] });
+        await input.channel.send({files: [spunWheel]});
         await input.channel.send([
             '_ _',
             `**The wheel landed on ${landingTileNumber}!**`,
@@ -180,13 +188,18 @@ export class Roulette extends Command {
         return await canvas.getBufferAsync(Jimp.MIME_PNG);
     }
 
-    private getReactionNumber(emoji: string) : number {
+    private getReactionNumber(emoji: string): number {
         switch (emoji) {
-            case Emoji.SPIN_1: return 1;
-            case Emoji.SPIN_2: return 2;
-            case Emoji.SPIN_5: return 5;
-            case Emoji.SPIN_10: return 10;
-            case Emoji.SPIN_20: return 20;
+            case Emoji.SPIN_1:
+                return 1;
+            case Emoji.SPIN_2:
+                return 2;
+            case Emoji.SPIN_5:
+                return 5;
+            case Emoji.SPIN_10:
+                return 10;
+            case Emoji.SPIN_20:
+                return 20;
         }
 
         return 0;
@@ -202,36 +215,14 @@ export class Roulette extends Command {
                 '_ _'
             ].join('\n')) as Message,
             await input.channel.send({
-                files: [ await this.generateRotatedWheel(0) ]
+                files: [await this.generateRotatedWheel(0)]
             }) as Message
         ];
     }
 
-    private async countdown(message: Message, start: number) {
-        let elapsed = (_.now() - start) / 1000;
-        let remaining = Math.ceil(30 - elapsed);
-
-        let fn = async () => {
-            elapsed = (_.now() - start) / 1000;
-            remaining = Math.ceil(30 - elapsed);
-
-            if (remaining > 0) {
-                await message.edit(`_ _\n${Emoji.LOADING}  **Spinning** in ${remaining} seconds...`);
-            }
-            else {
-                await message.edit(`${Emoji.LOADING}  **Spinning** now...`);
-            }
-        };
-
-        while (remaining > 0) {
-            await sleep(Math.min(2000, remaining * 1000));
-            await fn();
-        }
-    }
-
-    private async calculateWinnersLosers(number: number, bets: {[id: string]: Bet}) : Promise<string> {
-        let winners : string[] = [];
-        let losers : string[] = [];
+    private async calculateWinnersLosers(number: number, bets: { [id: string]: Bet }): Promise<string> {
+        let winners: string[] = [];
+        let losers: string[] = [];
         let output = '';
 
         _.each(bets, bet => {
