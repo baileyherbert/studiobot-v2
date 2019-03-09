@@ -1,9 +1,19 @@
-import { Command, Input } from '@api';
+import { Command, Input, Listener } from '@api';
 import * as request from 'request';
 import { Response } from 'request';
 import { Message } from 'discord.js';
+import { Emoji } from '@bot/libraries/emoji';
+import { Reactions } from '@bot/libraries/reactions';
+import { Framework } from '@core/framework';
+import { Timer } from '@bot/libraries/utilities/timer';
+import { ReactionListener } from '@bot/listeners/reactions';
+import { listeners } from 'cluster';
+import { GuildMember } from 'discord.js';
+import { Economy } from "@libraries/economy";
+import { debug } from 'util';
 const entities = require("html-entities").AllHtmlEntities;
 
+//TODO: Line 468 and 472 convert from member.id to member.displayname
 //TODO: Trivia should be multiplayer, but work fine for single player
 //TODO: End game if inactive for certain amount of time
 //along with the trivia question thats displayed. The players click the reaction they think is the answer
@@ -18,10 +28,10 @@ const entities = require("html-entities").AllHtmlEntities;
 
 //--------[Requires Framework Support]---------
 //DONE: Display amount of questions for each category
-//TODO: Integrate reaction collector
 
 //--------------------[Done]---------------------
 //DONE: Add reacts a,b,c,d to the displayed trivia
+//DONE: Integrate reaction collector
 
 const triviaCategories: string[] = [
     'All',
@@ -110,20 +120,21 @@ export class Trivia extends Command {
     //         //let c = await parseResponse('https://opentdb.com/api_count.php?category=' + (i + 8).toString() );
     //     }
     // }
-
+    
     async execute(input: Input) {
-
+        
         let category = input.getArgument('category');
         let difficulty = input.getArgument('difficulty');
         let type = input.getArgument('type');
-
+        
         //Translate user input into URLS for the database
         let difficultyURL: string = '&difficulty=' + difficulty;
         let typeURL: string = '&type=' + type;
         let categoryURL: string = '';
         let questionAmount = '?amount=10';
         let openTDB = 'https://opentdb.com/api.php';
-
+        let choiceEmoji = ['🇦', '🇧', '🇨', '🇩'];
+        
         //Set the URLs to default any if no arguments are entered
         if (!difficulty || difficulty == 'any' || difficulty == 'all') { difficultyURL = ''; }
         if (!type || type == 'any' || type == 'all') { typeURL = ''; }
@@ -141,108 +152,338 @@ export class Trivia extends Command {
         let parsed = await parseResponse(openTDB + questionAmount + categoryURL + difficultyURL + typeURL) as TriviaResponse;
         let count = 0;
         //do {
+
+        //Fix any encoding errors using entities.decode()
+        //Normalize the names for the parsed TriviaResponse data 
+        let question = entities.decode(parsed.results[count].question);
+        let incorrect_answers: string[] = [];
+        let correct_answer = entities.decode(parsed.results[count].correct_answer);
+        let answers = [correct_answer];
+        _.each(parsed.results[count].incorrect_answers, s => incorrect_answers.push(entities.decode(s)));
+        incorrect_answers.forEach(element => { answers.push(element); });
+
+
+        // console.log(`Question: ${question}`);
+        // console.log(`dQuestion: ${entities.decode(question)}`);
+        // console.log(`CorrectAnswer: ${correct_answer}`);
+        // console.log(`IncorrectAnswers: ${incorrect_answers}`);
+        // console.log(`Category: ${parsed.results[count].category}`);
+
+        //Randomize answers before displaying
+        if (answers.length > 2) {
+            for (let i = answers.length - 1; i > 0; i--) {
+                let e = Math.floor(Math.random() * (i + 1));
+                let temp = answers[i];
+                answers[i] = answers[e];
+                answers[e] = temp;
+            }
+        }
+        //Make A) say true every time
+        else {
+            if (correct_answer == 'True') {
+                answers[0] = correct_answer;
+                answers[1] = incorrect_answers[0];
+            }
+            else if (incorrect_answers[0] == 'True') {
+                answers[0] = incorrect_answers[0];
+                answers[1] = correct_answer;
+            }
+        }
+        
+        let answersDictonary = {
+            '🇦': answers[0],
+            '🇧': answers[1],
+            '🇨': answers[2],
+            '🇩': answers[3]
+        };
+
+        let correctAnswerEmoji = '';
+        _.each(answersDictonary, (answer, emoji) => {
+            if (answer == correct_answer) {
+                correctAnswerEmoji = emoji;
+            }
+        });
+
+        //getLogger only appears in the website console
+        //Use console.log for debugging
+        this.getLogger().debug("Answers:" + answers);
+        this.getLogger().debug('Type: ' + parsed.results[count].type);
+        this.getLogger().debug('URL: ' + openTDB + questionAmount + categoryURL + difficultyURL + typeURL);
+        this.getLogger().debug('results: ' + parsed.results);
+        this.getLogger().debug('questions: ' + question);
+        this.getLogger().debug('Category: ' + parsed.results[count].category);
+
+        let message: Message;
+        let multipleChoice = parsed.results[count].type == 'multiple';
+
+        //Display the correct message depending on the answer type
+        if (multipleChoice) {
+            message = await input.channel.send({
+                embed:
+                {
+                    color: 3447003,
+                    title: '__' + parsed.results[count].category + '__',
+                    description: question,
+                    fields: [{
+                        name: 'A)',
+                        value: answersDictonary["🇦"]
+                    },
+                    {
+                        name: 'B)',
+                        value: answersDictonary["🇧"]
+                    },
+                    {
+                        name: 'C)',
+                        value: answersDictonary["🇨"]
+                    },
+                    {
+                        name: 'D)',
+                        value: answersDictonary["🇩"]
+                    }],
+                }
+            }) as Message;
+        }
+        else {
+            message = await input.channel.send({
+                embed:
+                {
+                    color: 3447003,
+                    title: '__' + parsed.results[count].category + '__',
+                    description: question,
+                    fields: [{
+                        name: 'A)',
+                        value: answersDictonary["🇦"]
+                    },
+                    {
+                        name: 'B)',
+                        value: answersDictonary["🇧"]
+                    }],
+                }
+            }) as Message;
+        }
+
+        //Create a "dictionary" to link the member.id to whether they are correct or not
+        let reactionAnswers: { [id: string]: boolean } = {};
+
+        let listener = Reactions.listen(message, reaction => {
+            if (reaction.member == input.guild.member(Framework.getClient().user)) return;
+            if (reaction.action == 'remove') return;
+
+            let timer = new Timer();
+
+            if (reaction.action == "add") {
+                reactionAnswers[reaction.member.id] = reaction.emoji.equals(correctAnswerEmoji);
+            }
+
+            // //For every answer
+            // answers.forEach(element => {
+            //     // Find the correct answer out of 4 elements
+            //     if (element == correct_answer && parsed.results[count].type == 'multiple') {
+
+            //         let correctChoice = element;
+            //         //If the emoji the user entered is a, b, c, or d
+            //         if (reaction.emoji == '🇦' || reaction.emoji == '🇧' || reaction.emoji == '🇨' || reaction.emoji == '🇩') {
+
+            //             //And the emoji is the correct answer
+            //             if (answersDictonary[reaction.emoji] == correctChoice) {
+            //                 input.channel.send("Correct");
+            //             }
+            //             else {
+            //                 input.channel.send("Wrong");
+            //             }
+            //         }
+            //         else {
+            //             //Find the correct answer out of 2 elements
+            //             if (element == correct_answer) {
+
+            //                 let correctChoice = element;
+            //                 //If the emoji the user entered is a, b, c, or d
+            //                 if (reaction.emoji == '🇦' || reaction.emoji == '🇧') {
+            //                     //And the emoji is the correct answer
+            //                     if (answersDictonary[reaction.emoji] == correctChoice) {
+            //                         input.channel.send("Correct");
+            //                     }
+            //                     else {
+            //                         input.channel.send("Wrong");
+            //                     }
+            //                 }
+            //                 else {
+
+            //                 }
+            //             }
+            //         }
+            //     }
+            // });
+        })
+
+        // Add the reactions
+        if (multipleChoice) {
             
-            //Fix any encoding errors using entities.decode()
-            //Normalize the names for the parsed TriviaResponse data 
-            let question = entities.decode(parsed.results[count].question);
-            let incorrect_answers: string[] = [];
-            let correct_answer = entities.decode(parsed.results[count].correct_answer);
-            let answers = [correct_answer];
-            _.each(parsed.results[count].incorrect_answers, s => incorrect_answers.push(entities.decode(s)));
-            incorrect_answers.forEach(element => { answers.push(element); });
+            for(let i = 0; i < choiceEmoji.length; i++){
+                await message.react(choiceEmoji[i]);
+            }
+        }
+        else {
+            for(let i = 0; i < choiceEmoji.length/2; i++){
+                await message.react(choiceEmoji[i]);
+            }
+        }
 
-            // console.log(`Question: ${question}`);
-            // console.log(`dQuestion: ${entities.decode(question)}`);
-            // console.log(`CorrectAnswer: ${correct_answer}`);
-            // console.log(`IncorrectAnswers: ${incorrect_answers}`);
-            // console.log(`Category: ${parsed.results[count].category}`);
+        // Countdown (20 sec)
+        let countdownMessage = await input.channel.send(`${Emoji.LOADING}  20 seconds left...`) as Message;
+        let timer = new Timer(5, async function (remaining) {
+            await countdownMessage.edit(`${Emoji.LOADING}  ${remaining} seconds left...`);
+        });
+        timer.run();
+        await timer.wait();
 
-            //Randomize answers before displaying
-            if (answers.length > 2) {
-                for (let i = answers.length - 1; i > 0; i--) {
-                    let e = Math.floor(Math.random() * (i + 1));
-                    let temp = answers[i];
-                    answers[i] = answers[e];
-                    answers[e] = temp;
+        // Close listener
+        listener.close();
+
+        // Split into two groups (correct and incorrect)
+        let correct: GuildMember[] = [];
+        let incorrect: GuildMember[] = [];
+
+
+        _.each(reactionAnswers, (wasCorrect, id) => {
+            // Get the member instance from their id
+            let member = input.guild.member(id);
+
+            // Add them to the appropriate array
+            if (wasCorrect) correct.push(member);
+            else incorrect.push(member);
+        });
+
+        //If no one answers delete the question
+        if (_.size(reactionAnswers) == 0) {
+
+            countdownMessage.edit(`${Emoji.LOADING} No answers chosen, shutting down...`);
+            message.deleteAfter(2000);
+            countdownMessage.delete();
+        }
+        else {
+
+            // Award...
+            let reward = 5;
+            let winResponse = `:moneybag: You each earned $${reward}!`;
+            let loseResponse = `Better luck next time.`;
+            let answerResponse = `**Correct Answer: ${correct_answer}**`;
+            let currentBalance = `Current balance is ${incorrect[0].settings.currency}`;
+            let incorrectEmoji = Emoji.ERROR;
+            let correctEmoji = Emoji.SUCCESS;
+            
+            if (_.size(reactionAnswers) == 1) {
+                //A single user entered a incorrect answer
+                if (incorrect.length == 1) {
+                        countdownMessage.edit({
+                        embed:
+                        {
+                            color: 0xff4040,
+                            title: answerResponse,
+                            description: incorrectEmoji + `**Incorrect**`,
+                            fields: [{
+                                name: currentBalance,
+                                value: loseResponse,
+                            }],
+                        }
+                    });
+                }
+                else if (incorrect.length == 1 && correct.length == 1) {
+                        countdownMessage.edit({
+                        embed:
+                        {
+                            color: 3447003,
+                            title: answerResponse,
+                            fields: [{
+                                name: correctEmoji + `Correct: ${correct.join(', ')}`,
+                                value: `:moneybag: You earned $${reward}!`
+                            },
+                            {
+                                name: incorrectEmoji + `Incorrect: ${incorrect.join(', ')}`,
+                                value: loseResponse
+                            }],
+                        }
+                    });
+
+                    correct.forEach(function (element) {
+                        Economy.addBalance(element, reward);
+                    });
+                }
+                //A single user entered a correct answer
+                else {
+                        countdownMessage.edit({
+                        embed:
+                        {
+                            color: 0x50C878,
+                            title: answerResponse,
+                            description: correctEmoji + `**Correct!**`,
+                            fields: [{
+                                name: currentBalance,
+                                value: winResponse
+                            }],
+                        }
+                    });
                 }
             }
-            //Make A) say true every time
+            //Multiple users entered only incorrect answers
+            else if (correct.length == 0) {
+                    countdownMessage.edit({
+                    embed:
+                    {
+                        color: 0xff4040,
+                        title: answerResponse,
+                        fields: [{
+                            name: 'Everybody was wrong!',
+                            value: loseResponse
+                        }],
+                    }
+                });
+            }
+            //Multiple users entered only correct answers
+            else if (incorrect.length == 0) {
+                    countdownMessage.edit({
+                    embed:
+                    {
+                        color: 0x50C878,
+                        title: answerResponse,
+                        fields: [{
+                            name: 'Everybody was correct!',
+                            value: winResponse
+                        }],
+                    }
+                });
+                //Add money to the balance of those who answred correctly
+                correct.forEach(function (element) {
+                    Economy.addBalance(element, 5);
+                });
+            }
+            //incorrect.join() and correct.join return member.id, not member name 
+            //Multiple users entered incorrect and correct answers
             else {
-                if (correct_answer == 'True') {
-                    answers[0] = correct_answer;
-                    answers[1] = incorrect_answers[0];
-                }
-                else if (incorrect_answers[0] == 'True') {
-                    answers[0] = incorrect_answers[0];
-                    answers[1] = correct_answer;
-                }
-            }
-
-            //getLogger only appears in the website console
-            //Use console.log for debugging
-            this.getLogger().debug("Answers:" + answers);
-            this.getLogger().debug('Type: ' + parsed.results[count].type);
-            this.getLogger().debug('URL: ' + openTDB + questionAmount + categoryURL + difficultyURL + typeURL);
-            this.getLogger().debug('results: ' + parsed.results);
-            this.getLogger().debug('questions: ' + question);
-            this.getLogger().debug('Category: ' + parsed.results[count].category);
-
-            //Display the correct message depending on the answer type
-            if (parsed.results[count].type == 'multiple') {
-               let messageMultiple = await input.channel.send({
+                    countdownMessage.edit({
                     embed:
                     {
                         color: 3447003,
-                        title: '__' + parsed.results[count].category + '__',
-                        description: question,
+                        title: answerResponse,
                         fields: [{
-                            name: 'A)',
-                            value: answers[0]
+                            name: Emoji.SUCCESS + `Correct: ${correct.join(', ')}`,
+                            value: winResponse
                         },
                         {
-                            name: 'B)',
-                            value: answers[1]
-                        },
-                        {
-                            name: 'C)',
-                            value: answers[2]
-                        },
-                        {
-                            name: 'D)',
-                            value: answers[3]
+                            name: Emoji.ERROR + `Incorrect: ${incorrect.join(', ')}`,
+                            value: loseResponse
                         }],
                     }
-                }) as Message;
-                await messageMultiple.react('🇦');
-                await messageMultiple.react('🇧');
-                await messageMultiple.react('🇨');
-                await messageMultiple.react('🇩');
-            }
-            else {
-                let messageBoolean = await input.channel.send({
-                    embed:
-                    {
-                        color: 3447003,
-                        title: '__' + parsed.results[count].category + '__',
-                        description: question,
-                        fields: [{
-                            name: 'A)',
-                            value: answers[0]
-                        },
-                        {
-                            name: 'B)',
-                            value: answers[1]
-                        }],
-                    }
-                }) as Message;
-                await messageBoolean.react('🇦');
-                await messageBoolean.react('🇧');
+                });
+
+                correct.forEach(function (element) {
+                    Economy.addBalance(element, 5);
+                });
             }
 
-            count++;
-            //   const collector = (reaction, user)
-        //}
-        //while (count < 10)
+            console.log('winners:', correct);
+            console.log('losers:', incorrect);
+        }
     }
 }
 
