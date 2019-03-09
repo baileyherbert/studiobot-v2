@@ -1,5 +1,23 @@
 import {Message, TextChannel} from "discord.js";
 
+export function progressBarText(percent: number, maxLength: number, progressive: boolean) {
+    if (percent < 0 || percent > 1)
+        throw new Error('Percent must be greater than 0 and less than or equal to 1');
+    if (maxLength < 0 || maxLength > 100)
+        throw new Error('Bar length must be greater than 0 and less than or equal to 100');
+
+    let loadedChars = Math.round(percent * maxLength);
+
+    let result = '` 󠀀󠀀' + ('█').repeat(loadedChars);
+    if (loadedChars < maxLength) {
+        result += ' 󠀀󠀀'.repeat(maxLength - loadedChars);
+        if (progressive) result += '>';
+    }
+    result += '󠀀`';
+
+    return result;
+}
+
 export class ProgressBar {
     private channel: TextChannel;
     private title: string;
@@ -21,12 +39,7 @@ export class ProgressBar {
     }
 
     private generateMessage(percent: number) {
-        let loadedChars = Math.round(percent * this.maxChars);
-
-        let result = ('=').repeat(loadedChars);
-        if (loadedChars < this.maxChars) result += '>' + ' '.repeat(this.maxChars - loadedChars);
-
-        return `${this.title}` +'\n```[' + result + ']```';
+        return `${this.title}` + '\n```[' + progressBarText(percent, this.maxChars, true) + ']```';
     }
 
     async initialize() {
