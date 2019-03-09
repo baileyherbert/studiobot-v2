@@ -12,6 +12,7 @@ export class Poll extends Command {
             arguments: [
                 {
                     name: 'question',
+                    description: 'The question to start a poll for, in quotation marks.',
                     constraint: 'string',
                     required: true,
                 },
