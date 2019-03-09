@@ -7,6 +7,7 @@ export class Poll extends Command {
     constructor() {
         super({
             name: 'poll',
+            aliases: ['vote'],
             description: 'Lets members vote on between 2-6 options',
             arguments: [
                 {
