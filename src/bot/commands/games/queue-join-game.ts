@@ -3,15 +3,18 @@ import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Ro
 import { LobbyManager } from '@bot/libraries/games/lobby-manager'
 import { TTTLobby } from '@bot/libraries/games/tictactoe/ttt-lobby';
 import { Lobby } from '@bot/libraries/games/lobby';
+import { RPSLobby } from '@bot/libraries/games/rps/rps-lobby';
 
 export module gameEnums{
     export enum GameTypeEnum {
-        TicTacToe = 0
+        TicTacToe = 0,
+        RockPaperScissors = 1
     }
 }
 
 const gameTypeAlias : string[][] = [
-    ['tictactoe', 'ttt', 'tictac', 'tic']
+    ['tictactoe', 'ttt', 'tictac', 'tic'],
+    ['rps', 'rockpaperscissors', 'rockbeatsall', 'itsnotjustaboulderitsarock']
 ]
 
 export class QueueJoinGame extends Command {
@@ -74,10 +77,14 @@ export class QueueJoinGame extends Command {
         let self = this;
         collector.once('collect', function(message){
             let lobby : Lobby | null = null;
-            let tttRegexp = new RegExp(self.gameTypeRegexpStrings[gameEnums.GameTypeEnum.TicTacToe])
-            if (message.content.match(tttRegexp))
-            {
+            let tttRegexp = new RegExp(self.gameTypeRegexpStrings[gameEnums.GameTypeEnum.TicTacToe]);
+            if (message.content.match(tttRegexp)){
                 lobby = new TTTLobby(input.guild, input.channel, self.lobbyManager, input.member, null);
+            }
+
+            let rpsRegexp = new RegExp(self.gameTypeRegexpStrings[gameEnums.GameTypeEnum.RockPaperScissors]);
+            if (message.content.match(rpsRegexp)){
+                lobby = new RPSLobby(input.guild, input.channel, self.lobbyManager, input.member, null);
             }
 
             if (lobby) {
@@ -114,7 +121,7 @@ export class QueueJoinGame extends Command {
                 self.lobbyManager.BeginGameInLobby(lobbyIndex);
             }
             else{
-                console.log('ouch');
+                //Do nothing
             }
         });
     }
@@ -138,8 +145,6 @@ export class QueueJoinGame extends Command {
     private CompareGameType(message : Message) : boolean {
         let content : string = message.content;
         let regexp : RegExp = new RegExp(this.testGameTypeRegexpString);
-        console.log(this.testGameTypeRegexpString);
-        console.log(this.gameTypeRegexpStrings);
         return regexp.test(content);
     }
 
@@ -201,7 +206,6 @@ export class QueueJoinGame extends Command {
                 message += this.AddPlayerNameToMessage(currentLobby.GetPlayer(2) as GuildMember);
             }
             
-            console.log(lobbiesInServer[index].GetType());
             message += String(lobbiesInServer[index].GetType());
         }
 

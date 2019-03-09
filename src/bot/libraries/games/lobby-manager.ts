@@ -24,7 +24,6 @@ export class LobbyManager {
 
         if (!isNaN(lobbyIndex))
         {
-            console.log("Okay");
             this.RemoveLobby(lobbyIndex);
         }
     }
