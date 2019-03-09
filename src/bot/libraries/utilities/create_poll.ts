@@ -24,6 +24,7 @@ export class UserPoll extends EventEmitter {
         this.title = title;
         this.prompt = prompt;
         this.channel = channel;
+        if (options.length < 2 || options.length > 6) throw new Error('Options length must be between 2-6');
         this.options = shuffle ? _.shuffle(options) : options;
         this.correctAnswer = options.indexOf(options[0]);
         this.time = time;
