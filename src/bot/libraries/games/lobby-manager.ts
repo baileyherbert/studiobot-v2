@@ -1,15 +1,15 @@
 import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Role } from 'discord.js';
-import { TTTLobby } from '@bot/libraries/tictactoe/ttt-lobby'
+import { Lobby } from '@bot/libraries/games/lobby'
 
-export class TTTLobbyManager {
-    private lobbies : TTTLobby[];
+export class LobbyManager {
+    private lobbies : Lobby[];
 
-    constructor(lobbies: TTTLobby[] = []){
+    constructor(lobbies: Lobby[] = []){
         this.lobbies = lobbies;
     }
 
-    AddLobby(server: Guild, channel : TextChannel | DMChannel | GroupDMChannel, player: GuildMember) : number{
-        this.lobbies.push(new TTTLobby(server, channel, this, player, null));
+    AddLobby(lobby : Lobby) : number{
+        this.lobbies.push(lobby);
         return this.lobbies.length - 1;
     }
 
@@ -19,7 +19,7 @@ export class TTTLobbyManager {
         }
     }
 
-    FindAndRemoveLobby(lobby: TTTLobby){
+    FindAndRemoveLobby(lobby: Lobby){
         let lobbyIndex : number = this.FindLobby(lobby);
 
         if (!isNaN(lobbyIndex))
@@ -29,7 +29,7 @@ export class TTTLobbyManager {
         }
     }
 
-    FindLobby(lobby: TTTLobby) : number {
+    FindLobby(lobby: Lobby) : number {
         for (let index = 0; index < this.lobbies.length; index++){
             if (lobby === this.lobbies[index]){
                 return index;
@@ -38,15 +38,15 @@ export class TTTLobbyManager {
         return NaN;
     }
 
-    GetLobby(lobbyIndex: number) : TTTLobby {
+    GetLobby(lobbyIndex: number) : Lobby {
         return this.lobbies[lobbyIndex];
     }
 
-    GetLobbies() : TTTLobby[]{
+    GetLobbies() : Lobby[]{
         return this.lobbies;
     }
 
-    GetLobbiesInChannel(server: Guild, channel: TextChannel | DMChannel | GroupDMChannel) : TTTLobby[]{
+    GetLobbiesInChannel(server: Guild, channel: TextChannel | DMChannel | GroupDMChannel) : Lobby[]{
         let lobbiesInServer = [];
 
         for (let index = 0; index < this.lobbies.length; index++){

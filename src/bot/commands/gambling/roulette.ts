@@ -50,7 +50,7 @@ export class Roulette extends Command {
         let welcomeMessages = await this.welcome(input);
 
         // Send countdown
-        let startTime = _.now();
+        let startTime = 30;
         let countdownMessage = await input.channel.send(`_ _\n${Emoji.LOADING}  **Spinning** in 30 seconds...`) as Message;
 
         // Listen for bets
@@ -99,7 +99,6 @@ export class Roulette extends Command {
         });
 
         // Count down
-
         let countdown = new Timer(startTime, async function(remaining) {
             await countdownMessage.edit(`_ _\n${Emoji.LOADING}  **Spinning** in ${remaining} seconds...`);
         });
