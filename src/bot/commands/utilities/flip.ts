@@ -69,7 +69,12 @@ const characters : {[original: string]: string} = {
     '&': '⅋',
     '_': '‾',
     '?': '¿',
-    '`': ','
+    '`': ',',
+    '[': ']',
+    '>': '<',
+    '{': '}',
+    '(': ')',
+    '/': '\\'
 };
 
 export class Flip extends Command {
