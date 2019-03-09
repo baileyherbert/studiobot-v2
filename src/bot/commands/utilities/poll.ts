@@ -18,6 +18,7 @@ export class Poll extends Command {
                 },
                 {
                     name: 'choices',
+                    description: 'A list of choices separated by commas.',
                     required: true,
                     expand: true,
                     pattern: /(.+,)+.+/
