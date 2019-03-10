@@ -21,8 +21,8 @@ const entities = require("html-entities").AllHtmlEntities;
 //---------[Require Framework Support]---------
 //TODO: Display amount of questions in each category
 
-//------------------[Maybe]-------------------- 
-//TODO: Add Trivia join command. 
+//------------------[Maybe]--------------------
+//TODO: Add Trivia join command.
 //TODO: Add Amount command
 
 const triviaCategories: string[] = [
@@ -111,13 +111,13 @@ export class Trivia extends Command {
     //         //let c = await parseResponse('https://opentdb.com/api_count.php?category=' + (i + 8).toString() );
     //     }
     // }
-    
+
     async execute(input: Input) {
-        
+
         let category = input.getArgument('category');
         let difficulty = input.getArgument('difficulty');
         let type = input.getArgument('type');
-        
+
         //Translate user input into URLS for the database
         let difficultyURL: string = '&difficulty=' + difficulty;
         let typeURL: string = '&type=' + type;
@@ -128,7 +128,7 @@ export class Trivia extends Command {
 
         //Amount of time to answer the question in seconds
         let startTime = 15;
-        
+
         //Set the URLs to default any if no arguments are entered
         if (!difficulty || difficulty == 'any' || difficulty == 'all') { difficultyURL = ''; }
         if (!type || type == 'any' || type == 'all') { typeURL = ''; }
@@ -148,7 +148,7 @@ export class Trivia extends Command {
         //do {
 
         //Fix any encoding errors using entities.decode()
-        //Normalize the names for the parsed TriviaResponse data 
+        //Normalize the names for the parsed TriviaResponse data
         let question = entities.decode(parsed.results[count].question);
         let incorrect_answers: string[] = [];
         let correct_answer = entities.decode(parsed.results[count].correct_answer);
@@ -157,8 +157,9 @@ export class Trivia extends Command {
         incorrect_answers.forEach(element => { answers.push(element); });
 
         //Randomize answers before displaying
-        if (answers.length > 2)
+        if (answers.length > 2) {
             _.shuffle(answers);
+        }
         //Make A) say true every time
         else {
             if (correct_answer == 'True') {
@@ -170,7 +171,7 @@ export class Trivia extends Command {
                 answers[1] = correct_answer;
             }
         }
-        
+
         let answersDictonary = {
             '🇦': answers[0],
             '🇧': answers[1],
@@ -188,7 +189,6 @@ export class Trivia extends Command {
         let message: Message;
         let multipleChoice = parsed.results[count].type == 'multiple';
         let questionDifficulty = parsed.results[count].difficulty.capitalize();
-        console.log(questionDifficulty);
         //Display the correct message depending on the answer type
         if (multipleChoice) {
             message = await input.channel.send({
@@ -284,13 +284,13 @@ export class Trivia extends Command {
             if (wasCorrect){
                 correct.push(member);
                 correctNames.push(member.displayName);
-            } 
+            }
             else{
                 incorrect.push(member);
                 incorrectNames.push(member.displayName);
-            } 
+            }
         });
-        
+
         //If no one answers delete the question delete it
         if (_.size(reactionAnswers) == 0) {
             countdownMessage.edit(`${Emoji.LOADING} No answers chosen, shutting down...`);
