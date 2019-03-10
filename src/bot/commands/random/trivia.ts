@@ -11,6 +11,7 @@ import { listeners } from 'cluster';
 import { GuildMember } from 'discord.js';
 import { Economy } from "@libraries/economy";
 import { debug } from 'util';
+import { TextChannel } from 'discord.js';
 const entities = require("html-entities").AllHtmlEntities;
 
 //TODO: Line 468 and 472 convert from member.id to member.displayname
@@ -221,7 +222,7 @@ export class Trivia extends Command {
             message = await input.channel.send({
                 embed:
                 {
-                    color: 3447003,
+                    color: 0xfab005,
                     title: '__' + parsed.results[count].category + '__',
                     description: question,
                     fields: [{
@@ -247,7 +248,7 @@ export class Trivia extends Command {
             message = await input.channel.send({
                 embed:
                 {
-                    color: 3447003,
+                    color: 0xfab005,
                     title: '__' + parsed.results[count].category + '__',
                     description: question,
                     fields: [{
@@ -269,69 +270,26 @@ export class Trivia extends Command {
             if (reaction.member == input.guild.member(Framework.getClient().user)) return;
             if (reaction.action == 'remove') return;
 
-            let timer = new Timer();
-
             if (reaction.action == "add") {
                 reactionAnswers[reaction.member.id] = reaction.emoji.equals(correctAnswerEmoji);
             }
-
-            // //For every answer
-            // answers.forEach(element => {
-            //     // Find the correct answer out of 4 elements
-            //     if (element == correct_answer && parsed.results[count].type == 'multiple') {
-
-            //         let correctChoice = element;
-            //         //If the emoji the user entered is a, b, c, or d
-            //         if (reaction.emoji == '🇦' || reaction.emoji == '🇧' || reaction.emoji == '🇨' || reaction.emoji == '🇩') {
-
-            //             //And the emoji is the correct answer
-            //             if (answersDictonary[reaction.emoji] == correctChoice) {
-            //                 input.channel.send("Correct");
-            //             }
-            //             else {
-            //                 input.channel.send("Wrong");
-            //             }
-            //         }
-            //         else {
-            //             //Find the correct answer out of 2 elements
-            //             if (element == correct_answer) {
-
-            //                 let correctChoice = element;
-            //                 //If the emoji the user entered is a, b, c, or d
-            //                 if (reaction.emoji == '🇦' || reaction.emoji == '🇧') {
-            //                     //And the emoji is the correct answer
-            //                     if (answersDictonary[reaction.emoji] == correctChoice) {
-            //                         input.channel.send("Correct");
-            //                     }
-            //                     else {
-            //                         input.channel.send("Wrong");
-            //                     }
-            //                 }
-            //                 else {
-
-            //                 }
-            //             }
-            //         }
-            //     }
-            // });
-        })
+        });
 
         // Add the reactions
         if (multipleChoice) {
-            
-            for(let i = 0; i < choiceEmoji.length; i++){
+            for (let i = 0; i < choiceEmoji.length; i++){
                 await message.react(choiceEmoji[i]);
             }
         }
         else {
-            for(let i = 0; i < choiceEmoji.length/2; i++){
+            for (let i = 0; i < choiceEmoji.length/2; i++){
                 await message.react(choiceEmoji[i]);
             }
         }
 
         // Countdown (20 sec)
-        let countdownMessage = await input.channel.send(`${Emoji.LOADING}  20 seconds left...`) as Message;
-        let timer = new Timer(5, async function (remaining) {
+        let countdownMessage = await input.channel.send(`${Emoji.LOADING}  15 seconds left...`) as Message;
+        let timer = new Timer(15, async function (remaining) {
             await countdownMessage.edit(`${Emoji.LOADING}  ${remaining} seconds left...`);
         });
         timer.run();
@@ -343,146 +301,58 @@ export class Trivia extends Command {
         // Split into two groups (correct and incorrect)
         let correct: GuildMember[] = [];
         let incorrect: GuildMember[] = [];
-
+        let correctNames : string[] = [];
+        let incorrectNames : string[] = [];
 
         _.each(reactionAnswers, (wasCorrect, id) => {
             // Get the member instance from their id
             let member = input.guild.member(id);
 
             // Add them to the appropriate array
-            if (wasCorrect) correct.push(member);
-            else incorrect.push(member);
+            if (wasCorrect){
+                correct.push(member);
+                correctNames.push(member.displayName);
+            } 
+            else{
+                incorrect.push(member);
+                incorrectNames.push(member.displayName);
+            } 
         });
-
+        
         //If no one answers delete the question
         if (_.size(reactionAnswers) == 0) {
-
             countdownMessage.edit(`${Emoji.LOADING} No answers chosen, shutting down...`);
             message.deleteAfter(2000);
             countdownMessage.delete();
         }
         else {
+            // Load settings for all members
+            for (let i = 0; i < correct.length; i++) await correct[i].load();
+            for (let i = 0; i < incorrect.length; i++) await incorrect[i].load();
 
-            // Award...
-            let reward = 5;
-            let winResponse = `:moneybag: You each earned $${reward}!`;
-            let loseResponse = `Better luck next time.`;
-            let answerResponse = `**Correct Answer: ${correct_answer}**`;
-            let currentBalance = `Current balance is ${incorrect[0].settings.currency}`;
-            let incorrectEmoji = Emoji.ERROR;
-            let correctEmoji = Emoji.SUCCESS;
-            
-            if (_.size(reactionAnswers) == 1) {
-                //A single user entered a incorrect answer
-                if (incorrect.length == 1) {
-                        countdownMessage.edit({
-                        embed:
-                        {
-                            color: 0xff4040,
-                            title: answerResponse,
-                            description: incorrectEmoji + `**Incorrect**`,
-                            fields: [{
-                                name: currentBalance,
-                                value: loseResponse,
-                            }],
-                        }
-                    });
-                }
-                else if (incorrect.length == 1 && correct.length == 1) {
-                        countdownMessage.edit({
-                        embed:
-                        {
-                            color: 3447003,
-                            title: answerResponse,
-                            fields: [{
-                                name: correctEmoji + `Correct: ${correct.join(', ')}`,
-                                value: `:moneybag: You earned $${reward}!`
-                            },
-                            {
-                                name: incorrectEmoji + `Incorrect: ${incorrect.join(', ')}`,
-                                value: loseResponse
-                            }],
-                        }
-                    });
-
-                    correct.forEach(function (element) {
-                        Economy.addBalance(element, reward);
-                    });
-                }
-                //A single user entered a correct answer
-                else {
-                        countdownMessage.edit({
-                        embed:
-                        {
-                            color: 0x50C878,
-                            title: answerResponse,
-                            description: correctEmoji + `**Correct!**`,
-                            fields: [{
-                                name: currentBalance,
-                                value: winResponse
-                            }],
-                        }
-                    });
-                }
-            }
-            //Multiple users entered only incorrect answers
-            else if (correct.length == 0) {
-                    countdownMessage.edit({
-                    embed:
+            // Show winners and losers
+            await countdownMessage.edit({
+                embed:
+                {
+                    color: 0x22b8cf, // cyan
+                    title: 'Game over!',
+                    description: `The correct answer was **${correct_answer}**.\n\u200b`,
+                    fields: [{
+                        name: `${Emoji.SUCCESS}  Correct`,
+                        value: `${correct.length > 0 ? correct.join(', ') : 'Nobody'}\n\u200b`
+                    },
                     {
-                        color: 0xff4040,
-                        title: answerResponse,
-                        fields: [{
-                            name: 'Everybody was wrong!',
-                            value: loseResponse
-                        }],
-                    }
-                });
-            }
-            //Multiple users entered only correct answers
-            else if (incorrect.length == 0) {
-                    countdownMessage.edit({
-                    embed:
-                    {
-                        color: 0x50C878,
-                        title: answerResponse,
-                        fields: [{
-                            name: 'Everybody was correct!',
-                            value: winResponse
-                        }],
-                    }
-                });
-                //Add money to the balance of those who answred correctly
-                correct.forEach(function (element) {
-                    Economy.addBalance(element, 5);
-                });
-            }
-            //incorrect.join() and correct.join return member.id, not member name 
-            //Multiple users entered incorrect and correct answers
-            else {
-                    countdownMessage.edit({
-                    embed:
-                    {
-                        color: 3447003,
-                        title: answerResponse,
-                        fields: [{
-                            name: Emoji.SUCCESS + `Correct: ${correct.join(', ')}`,
-                            value: winResponse
-                        },
-                        {
-                            name: Emoji.ERROR + `Incorrect: ${incorrect.join(', ')}`,
-                            value: loseResponse
-                        }],
-                    }
-                });
+                        name: `${Emoji.ERROR}  Incorrect`,
+                        value: `${incorrect.length > 0 ? incorrect.join(', ') : 'Nobody'}`
+                    }],
+                }
+            });
 
-                correct.forEach(function (element) {
-                    Economy.addBalance(element, 5);
-                });
+            // Award currency
+            // Awaiting because it will send a message
+            for (let i = 0; i < correct.length; i++) {
+                await Economy.addBalance(correct[i], 5, input.channel as TextChannel);
             }
-
-            console.log('winners:', correct);
-            console.log('losers:', incorrect);
         }
     }
 }
