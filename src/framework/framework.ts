@@ -154,7 +154,7 @@ export class Framework {
                 environment: 'test',
                 options: { allowCodeExecution: false, loggingLevel: 'normal' },
                 server: { enabled: true, port: 3121 },
-                authentication: { discord: { token: '' }, cleverbot: { key: '' }}
+                authentication: { discord: { token: '' }, cleverbot: { key: '' }, openWeatherMap: { key: '' }}
             } as BotConfiguration, null, 4));
 
             return welcome();
@@ -525,6 +525,9 @@ type BotConfiguration = {
         },
         cleverbot: {
             key: string
+        };
+        openWeatherMap: {
+            key: string;
         };
     }
 };
