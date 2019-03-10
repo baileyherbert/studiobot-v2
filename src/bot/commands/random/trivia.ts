@@ -66,7 +66,6 @@ function parseResponse<T = any>(URL: string): Promise<T> {
     return new Promise((resolve, reject) => {
         request(URL, (error: any, response: Response, body: any) => {
             if (error) { reject(error); }
-            //console.log(body);
             resolve(JSON.parse(body));
         });
     });
@@ -204,15 +203,6 @@ export class Trivia extends Command {
                 correctAnswerEmoji = emoji;
             }
         });
-
-        //getLogger only appears in the website console
-        //Use console.log for debugging
-        this.getLogger().debug("Answers:" + answers);
-        this.getLogger().debug('Type: ' + parsed.results[count].type);
-        this.getLogger().debug('URL: ' + openTDB + questionAmount + categoryURL + difficultyURL + typeURL);
-        this.getLogger().debug('results: ' + parsed.results);
-        this.getLogger().debug('questions: ' + question);
-        this.getLogger().debug('Category: ' + parsed.results[count].category);
 
         let message: Message;
         let multipleChoice = parsed.results[count].type == 'multiple';
