@@ -10,10 +10,16 @@ export class Lenny extends Command {
         });
     }
 
-    execute(input: Input) {
+    async execute(input: Input) {
+
+        if (_.random(1,20) == 5) {
+            await input.channel.send("( ͡° ͜ʖ ͡°)");
+            return;
+        }
+
         let rnd = Math.floor(Math.random() * lenny.length);
 
-        input.channel.send((lenny[rnd]);
+        input.channel.send(lenny[rnd]);
 
     }
 }
