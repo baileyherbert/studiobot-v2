@@ -6,6 +6,7 @@ export class Noun extends Command {
     constructor() {
         super({
             name: 'yomama',
+            aliases: ['yomomma', 'yomamma', 'yomoma', 'yomom'], 
             description: `Displays a random Yo' Mama joke.`
         });
     }
