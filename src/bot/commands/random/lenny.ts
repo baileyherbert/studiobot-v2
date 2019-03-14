@@ -12,7 +12,7 @@ export class Lenny extends Command {
 
     async execute(input: Input) {
 
-        if (_.random(1,20) == 5) {
+        if (_.random(1,5) == 5) {
             await input.channel.send("( ͡° ͜ʖ ͡°)");
             return;
         }
