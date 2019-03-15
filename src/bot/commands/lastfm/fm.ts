@@ -34,8 +34,11 @@ export class LastFm extends Command {
         let lastfmURL = 'http://ws.audioscrobbler.com/2.0/?method=';
         let queryString = user + '&api_key= ' + key + '&limit=2&format=json';
 
+        let nullText = '[undefined]';
+        let nullURL = 'https://discordapp.com/assets/ea3b7f0aee3f51c3bbfe5a6d7f93e436.svg'
+
         // test
-        
+
         switch(action) {
             case 'get':
                 if (user && user != '') {
@@ -43,8 +46,6 @@ export class LastFm extends Command {
                         if (error) {
                             input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
                         }
-                        let nullText = '[undefined]';
-                        let nullURL = 'https://discordapp.com/assets/ea3b7f0aee3f51c3bbfe5a6d7f93e436.svg'
 
                         let parsed = JSON.parse(body);
 
@@ -127,8 +128,6 @@ export class LastFm extends Command {
                         if (error) {
                             input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
                         }
-                        let nullText = '[undefined]';
-                        let nullURL = 'https://discordapp.com/assets/ea3b7f0aee3f51c3bbfe5a6d7f93e436.svg'
 
                         let parsed = JSON.parse(body);
 
@@ -155,6 +154,64 @@ export class LastFm extends Command {
                 }
                 break;
             case 'artist':
+                if (input.getArgument('user')) {
+                    let requestURL = request((lastfmURL + 'artist.search' + '&artist=' + queryString), (error: any, response: Response, body: any) => {
+                        if (error) {
+                            input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
+                        }
+
+                        let parsed = JSON.parse(body);
+
+                        if (parsed.results.artistmatches == undefined) {
+                            input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
+                            return;
+                        }
+
+                        let id = parsed.results.artistmatches.artist[0].mbid;
+
+                        queryString = id + '&api_key= ' + key + '&limit=2&format=json';
+
+                        let newRequestURL = request((lastfmURL + 'artist.getInfo' + '&mbid=' + queryString), (error: any, response: Response, body: any) => {
+                            
+                            if (error) {
+                                input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
+                            }
+    
+                            let newParsed = JSON.parse(body);
+    
+                            if (newParsed.artist == undefined) {
+                                input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
+                                return;
+                            }
+    
+                            let artist = newParsed.artist
+                            
+                            input.channel.send( {
+                                embed: {
+                                    color: 3447003,
+                                    title: artist.name,
+                                    description: artist.bio.content.substring(0, 500) + '...',
+                                    url: artist.url,
+                                    image: {
+                                        url: artist.image[3]['#text']
+                                    },
+                                    fields: [
+                                        {
+                                            name: 'Total Listeners',
+                                            value: artist.stats.listeners
+                                        },
+                                        {
+                                            name: 'Total Playcount',
+                                            value: artist.stats.playcount
+                                        }
+                                    ]
+                                }                            
+                            })
+                        })
+
+                    });
+
+                }
                 break;
             case 'chart':
                 break;
