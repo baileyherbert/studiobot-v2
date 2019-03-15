@@ -1,9 +1,10 @@
-import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Role, MessageReaction } from 'discord.js';
+import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Role, MessageReaction, Client } from 'discord.js';
 import { LobbyManager } from '@bot/libraries/games/lobby-manager';
 import { Logger } from '@core/bot/logger';
 import { Lobby } from '@bot/libraries/games/lobby';
 import { Emoji } from '@bot/libraries/emoji';
-import { Client } from 'socket.io';
+import { Framework } from '@core/framework';
+//import { Client } from 'socket.io';
 
 export module rpsEnums{
     export enum RPSEnum{
@@ -57,51 +58,31 @@ export class RPSLobby extends Lobby {
         let self = this;
         collector.once('collect', function(number){
             self.firstTo = Number.parseInt(number.content);
-            self.SendInitialRpsDms();
-            
-            self.GameLoop();
+            self.SendInitialRpsDms().then(function() {
+                self.GameLoop();
+            });
         });
     }    
 
     GameLoop(): void {
-        //Someone please tell me what type "reaction" is.
         const filter = (reaction: MessageReaction) => this.IsReactionRPS(reaction);
-
-        this.GameLoopP1(filter);
-        
-        this.GameLoopP2(filter);
-    }
-
-    async GameLoopP1(filter: (reaction: MessageReaction) => boolean) {
-        if (this.p1Message) {
-            const collectorP1 = (this.p1Message as Message).createReactionCollector(filter, { time: Infinity });
-            let self = this;
-            collectorP1.once('collect', (reaction: MessageReaction, reactionCollector) => {
-                self.ProcessInput(self.player1 as GuildMember, self.p1Message as Message, self.p1Selection, reaction);
-                self.GameLoopP1(filter);
-            });
-        }
-        else{
-            console.log("Why");
-        }
-    }
-
-    async GameLoopP2(filter: (reaction: MessageReaction) => boolean) {
-        if (this.p2Message) {
-            const collectorP2 = (this.p2Message as Message).createReactionCollector(filter, { time: Infinity });
-            let self = this;
-            collectorP2.once('collect', (reaction: MessageReaction, reactionCollector) => {
-                self.ProcessInput(self.player2 as GuildMember, self.p2Message as Message, self.p2Selection, reaction);
-                self.GameLoopP2(filter);
-            });
-        }
-        else{
-            console.log("Why 2");
-        }
+        this.InputLoop(this.p1Message as Message, this.player1 as GuildMember, this.p1Selection, filter);        
+        this.InputLoop(this.p2Message as Message, this.player2 as GuildMember, this.p2Selection, filter);
     }
 
     GetNumWinsToEnd() : number {
         return this.firstTo;
+    }
+
+    async InputLoop(message: Message, player: GuildMember, selection: string, filter: (reaction: MessageReaction) => boolean) {
+        if (message) {
+            const collector = (message as Message).createReactionCollector(filter);
+            let self = this;
+            collector.once('collect', (reaction: MessageReaction, reactionCollector) => {
+                self.ProcessInput(player, message, selection, reaction);
+                self.InputLoop(message, player, selection, filter);
+            });
+        }
     }
 
     private IsReactionRPS(reaction: MessageReaction) : boolean {
@@ -112,8 +93,13 @@ export class RPSLobby extends Lobby {
     }
 
     async ProcessInput(player : GuildMember, message : Message, selection : string, input : MessageReaction){
-        message.clearReactions();
-        this.AddReactionsToMessage(message);
+        /*if (message.author.dmChannel.){
+            message.clearReactions();
+            this.AddReactionsToMessage(message);
+        }
+        else {*/
+            await this.SendInitialRpsDms();
+        /*}*/
         selection = input.emoji.name;
 
         /*for (let index : number = 0; index < message.reactions.size; index++){
@@ -124,19 +110,21 @@ export class RPSLobby extends Lobby {
         }*/
     }
 
-    SendInitialRpsDms(){
+    async SendInitialRpsDms(){
         let message : string = "It's time for Rock Paper Scissors. Pick one.";
 
         if (this.player1){
-            this.player1.send(message).then((msg) => {
+            await this.player1.send(message).then((msg) => {
                 this.p1Message = msg;
                 this.AddReactionsToMessage(this.p1Message);
+                console.log(`${this.p1Message} ${this.p2Message} at SendInitialRpsDms`);
             });
         }
         if (this.player2){
-            this.player2.send(message).then((msg) => {
+            await this.player2.send(message).then((msg) => {
                 this.p2Message = msg;
                 this.AddReactionsToMessage(this.p2Message);
+                console.log(`${this.p1Message} ${this.p2Message} at SendInitialRpsDms`);
             });
         }
     }
