@@ -70,6 +70,7 @@ export class Music extends Command {
                 await session.search(input, options as string);
                 break;
             case 'stop':
+                await session.terminateConnection();
                 break;
             case 'pause':
                 await session.pause();
