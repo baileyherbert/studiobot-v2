@@ -34,6 +34,8 @@ export class LastFm extends Command {
         let lastfmURL = 'http://ws.audioscrobbler.com/2.0/?method=';
         let queryString = user + '&api_key= ' + key + '&limit=2&format=json';
 
+        // test
+        
         switch(action) {
             case 'get':
                 if (user && user != '') {
