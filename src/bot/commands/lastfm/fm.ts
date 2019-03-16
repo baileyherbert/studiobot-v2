@@ -2,6 +2,7 @@ import { Command, Input } from '@api';
 import { Emoji } from '@bot/libraries/emoji';
 import * as request from 'request';
 import { Response } from 'request';
+import * as Jimp from 'jimp';
 
 export class LastFm extends Command {
 
@@ -162,16 +163,17 @@ export class LastFm extends Command {
 
                         let parsed = JSON.parse(body);
 
-                        if (parsed.results.artistmatches == undefined) {
-                            input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
+                        if (parsed.results.artistmatches == undefined || parsed.results.artistmatches.artist[0] == undefined) {
+                            input.channel.send(`${Emoji.ERROR}  Unable to retrieve artist data.`);
                             return;
                         }
 
                         let id = parsed.results.artistmatches.artist[0].mbid;
+                        let name = parsed.results.artistmatches.artist[0].name;
 
                         queryString = id + '&api_key= ' + key + '&limit=2&format=json';
 
-                        let newRequestURL = request((lastfmURL + 'artist.getInfo' + '&mbid=' + queryString), (error: any, response: Response, body: any) => {
+                        let newRequestURL = request((lastfmURL + 'artist.getInfo&artist=' + name + '&mbid=' + queryString), (error: any, response: Response, body: any) => {
                             
                             if (error) {
                                 input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
@@ -180,7 +182,7 @@ export class LastFm extends Command {
                             let newParsed = JSON.parse(body);
     
                             if (newParsed.artist == undefined) {
-                                input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
+                                input.channel.send(`${Emoji.ERROR}  Unable to retrieve artist data.`);
                                 return;
                             }
     
@@ -190,19 +192,19 @@ export class LastFm extends Command {
                                 embed: {
                                     color: 3447003,
                                     title: artist.name,
-                                    description: artist.bio.content.substring(0, 500) + '...',
+                                    description: artist.bio.content.substring(0, Math.min(500, artist.bio.content.length)) + '[...](' + artist.url + ')',
                                     url: artist.url,
                                     image: {
                                         url: artist.image[3]['#text']
                                     },
                                     fields: [
                                         {
-                                            name: 'Total Listeners',
-                                            value: artist.stats.listeners
+                                            name: 'Total listeners',
+                                            value: artist.stats.listeners.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                                         },
                                         {
-                                            name: 'Total Playcount',
-                                            value: artist.stats.playcount
+                                            name: 'Total playcount',
+                                            value: artist.stats.playcount.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                                         }
                                     ]
                                 }                            
@@ -210,10 +212,44 @@ export class LastFm extends Command {
                         })
 
                     });
-
                 }
                 break;
             case 'chart':
+                if (user && user != '') {
+                    let time = new Date().getTime()
+                    let requestURL = request((lastfmURL + 'user.getWeeklyAlbumChart' + '&user=' + user + '&from=946688400&to=1552697146' + '&api_key= ' + key + '&limit=2&format=json'), async (error: any, response: Response, body: any) => {
+                        if (error) {
+                            input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
+                        }
+
+                        let parsed = JSON.parse(body);
+
+                        if (parsed.weeklyalbumchart == undefined) {
+                            input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
+                            return;
+                        }
+
+                        let image : Jimp = await Jimp.read(pub('images/blankchart.png')) as Jimp;
+
+                        let count = 0;
+                        for (let i = 0; i < 3; i++) {
+                            for (let j = 0; j < 3; j++) {
+                                if (parsed.weeklyalbumchart.album[count].mbid != '') {
+                                    console.log(count);
+                                    let cover : Jimp = await Jimp.read(await this.getAlbumImage(parsed.weeklyalbumchart.album[count].name, parsed.weeklyalbumchart.album[count].artist['#text'], key)) as Jimp;
+                                    image.composite(cover, 300*i, 300*j);
+                                } else {
+                                    j -= 1;
+                                }
+                                count++;
+                            }
+                        }
+
+                        input.channel.send({
+                            files: [await image.getBufferAsync(Jimp.MIME_PNG)]
+                        });
+                    });
+                }
                 break;
             case 'artistchart':
                 break;
@@ -222,5 +258,46 @@ export class LastFm extends Command {
         }
 
         await db.save();
+    }
+
+    private getAlbumImage(name: string, artist: string, key: string) : Promise<string> {
+        return new Promise(resolve => {
+            let requestURL = request(('http://ws.audioscrobbler.com/2.0/?method=album.search&&album=' + name + '&api_key= ' + key + '&format=json'), (error: any, response: Response, body: any) => {
+                if (error) {
+                    //?
+                }
+
+                let parsed = JSON.parse(body);
+
+                if (parsed.results.albummatches == undefined) {
+                    resolve('https://upload.wikimedia.org/wikipedia/commons/4/48/BLANK_ICON.png');
+                    return;
+                } 
+                
+                console.log(name);
+                let url = '';
+                let result = 0;
+                while (true) {
+                    if (parsed.results.albummatches.album[result]) {
+                        if (parsed.results.albummatches.album[result].artist == artist) {
+                            url = parsed.results.albummatches.album[result].image[3]['#text'];
+                            break;
+                        } else {
+                            result++;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+
+                if (url == '') {
+                    resolve('https://upload.wikimedia.org/wikipedia/commons/4/48/BLANK_ICON.png');
+                    return;
+                } 
+
+                resolve(url);
+                
+            });
+        });
     }
 }
