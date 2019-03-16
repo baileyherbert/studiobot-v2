@@ -10,7 +10,7 @@ export class cat extends Command {
         super({
             name: 'cat',
             description: 'Displays a random image of a cat.',
-            aliases: ["neko"]
+            aliases: ["neko", "nekko", "kitty", "feline"]
         });
     }
 
