@@ -4,18 +4,17 @@ import {MusicMessagePlayer} from "@libraries/music/music-message-player";
 import {Input} from "@api";
 import {getInfo, validateURL} from "ytdl-core";
 import {VideoDownloader} from "@libraries/music/video-download";
-import {ProgressBar} from "@libraries/utilities/progress-bar";
 import {numberedList} from "@libraries/utilities/numbered-list";
 import {Emoji} from "@libraries/emoji";
 import {searchyt} from "@libraries/music/search-yt";
 import {userRangedChoice} from "@libraries/utilities/user-range-choice";
-import {uptime} from "os";
-import * as os from "os";
 import {parseDuration} from "@libraries/prettify-ms";
 
 // TODO : Add volume buttons
 // TODO : Add a queue embed
 // TODO : Add session specific 'queue' of up to 100 song references for prev / next functions
+// TODO : For the queue, add 'suggestions' that the users can easily use to add songs to the queue
+// TODO : Add support for soundcloud.
 
 export class Session {
     public guild: Guild;
@@ -51,8 +50,6 @@ export class Session {
 
         if (!this.connection) {
             this.connection = await video.requester.voiceChannel.join();
-
-            if (!this.connection) return;
             this.currentlyPlaying = this.queue.shift();
             await this.startStream();
         }
@@ -82,7 +79,7 @@ export class Session {
             if (!message || !this.currentlyPlaying) clearInterval(id);
             else if (percent < 1) await message.edit(msgFunc());
             else clearInterval(id);
-        }, 500);
+        }, 1000);
 
         dl.on('complete', async (file) => {
             await message.delete();
@@ -90,7 +87,10 @@ export class Session {
             this.currentlyPlaying.file = file;
             await this.seekStream(0);
             if (this.currentlyPlaying)
-                if (!this.messagePlayer) this.messagePlayer = new MusicMessagePlayer(this);
+                if (!this.messagePlayer) {
+                    this.messagePlayer = new MusicMessagePlayer(this);
+                    await this.messagePlayer.initialise();
+                }
                 else await this.messagePlayer.repost();
         });
     }
@@ -100,8 +100,6 @@ export class Session {
             throw new Error("Seek stream called on an unprepared server!");
         if (!this.currentlyPlaying.file)
             throw new Error("Server is ready, but no music file is set.");
-
-        // console.log(`Attempting to seek in stream to ${timeStamp}`);
 
         let defaultVolume = this.guild.settings.voice.volume;
         let t = timeStamp || 0;
@@ -124,6 +122,10 @@ export class Session {
     private async playNextOrEnd() {
         if (this.skipping) return;
         this.skipping = true;
+        if (this.queue.length <= 0 && this.autoplaying) {
+            await this.queueRelated();
+        }
+
         if (this.queue.length > 0) {
             this.currentlyPlaying = this.queue.pop();
             await this.startStream();
@@ -139,7 +141,10 @@ export class Session {
     public async terminateConnection() {
         this.currentlyPlaying = undefined;
         if (this.dispatcher) this.dispatcher = undefined;
-        if (this.connection) this.connection.disconnect();
+        if (this.connection) {
+            this.connection.disconnect();
+            this.connection = undefined;
+        }
         if (this.messagePlayer) await this.messagePlayer.clean();
     }
 
@@ -277,7 +282,7 @@ export class Session {
 
     async autoplay(options: string | undefined) {
         if (options == null) {
-            return await this.channel.send(`${Emoji.HELP} Autoplay is currently set to ${this.autoplaying}`);
+            return await this.channel.send(`${Emoji.HELP}  Autoplay is currently set to ${this.autoplaying}`);
         }
 
         if (/yes|1|true|on|/.test(options)) this.autoplaying = true;
@@ -301,5 +306,25 @@ export class Session {
         }
 
 
+    }
+
+    private async queueRelated() {
+        if (!this.currentlyPlaying) return;
+        let relatedList = [];
+
+        let index;
+        for (index in this.currentlyPlaying.info.related_videos) {
+            let related = this.currentlyPlaying.info.related_videos[index];
+            if (!related.id) continue;
+            relatedList.push(related);
+        }
+
+        let chosen = relatedList[Math.floor(Math.random() * relatedList.length / 3)];
+        while (!chosen.id)
+            chosen = relatedList[Math.floor(Math.random() * relatedList.length / 3)];
+        let videoInfo = `https://www.youtube.com/watch?v=${chosen.id}`;
+
+        console.log(`queueing related`);
+        await this.playUrl(videoInfo, this.currentlyPlaying.requester);
     }
 }

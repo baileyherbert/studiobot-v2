@@ -4,14 +4,13 @@ import {Framework} from "@core/framework";
 import {ReactionListener, Reactions} from "@libraries/reactions";
 import {EventEmitter} from "events";
 import {Session} from "@libraries/music/session";
-import {ReactionResponse} from "@libraries/utilities/reaction-manager";
 import {parseDuration} from "@libraries/prettify-ms";
 
 export class MusicMessagePlayer extends EventEmitter {
     channel: TextChannel;
     playerMessage?: Message;
     status: Status;
-    private reactions = ['⏪', '⏹', '⏯', '⏩', '▶']; //'◀',
+    private reactions = ['⏪', '⏹', '⏯', '⏩', '▶']; //'◀', '🔄'
     private reactionActions: { [reaction: string]: () => void } = {};
     private session: Session;
     private listener?: ReactionListener;
@@ -23,14 +22,28 @@ export class MusicMessagePlayer extends EventEmitter {
         this.session = session;
         this.channel = session.channel;
         this.status = Status.PLAYING;
-        this.repost();
-        this.bindActions();
-        this.beginUpdates();
+    }
+
+    public async initialise() {
+        await this.repost();
+        await this.bindActions();
+        await this.beginUpdates();
     }
 
     async addReactions() {
         for (let i = 0; i < this.reactions.length; i++) {
-            await this.playerMessage!.react(this.reactions[i]);
+            if (!this.playerMessage) return;
+            await this.playerMessage.react(this.reactions[i]);
+            // console.log(`Starting loop ${i}`);
+            // await new Promise((resolve, reject) => {
+            //     console.log(`Making promise`);
+            //     setTimeout(async () => {
+            //         if (!this.playerMessage) return reject;
+            //         await this.playerMessage.react(this.reactions[i]);
+            //         console.log(`Resolving`);
+            //         resolve();
+            //     }, 2500);
+            // });
         }
     }
 
