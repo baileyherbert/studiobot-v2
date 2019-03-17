@@ -139,6 +139,7 @@ export class Session {
     }
 
     public async terminateConnection() {
+        this.skipping = true;
         this.currentlyPlaying = undefined;
         if (this.dispatcher) this.dispatcher = undefined;
         if (this.connection) {
@@ -146,6 +147,7 @@ export class Session {
             this.connection = undefined;
         }
         if (this.messagePlayer) await this.messagePlayer.clean();
+        this.skipping = false;
     }
 
     createListeners() {
@@ -287,6 +289,7 @@ export class Session {
 
         if (/yes|1|true|on|/.test(options)) this.autoplaying = true;
         else if (/0|false|no|off/.test(options)) this.autoplaying = false;
+        return await this.channel.send(`${Emoji.SUCCESS}  Setting autoplay to ${this.autoplaying}`);
     }
 
     async loop(options: string | undefined) {
@@ -324,7 +327,7 @@ export class Session {
             chosen = relatedList[Math.floor(Math.random() * relatedList.length / 3)];
         let videoInfo = `https://www.youtube.com/watch?v=${chosen.id}`;
 
-        console.log(`queueing related`);
+        // console.log(`queueing related`);
         await this.playUrl(videoInfo, this.currentlyPlaying.requester);
     }
 }

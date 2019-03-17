@@ -121,26 +121,21 @@ export class MusicMessagePlayer extends EventEmitter {
         this.reactionActions = {
             '⏯': async () => {
                 if (!this.session.paused) {
-                    console.log('Pausing...');
                     await this.session.pause();
                     this.status = Status.PAUSED;
                 } else {
-                    console.log('Resuming...');
                     await this.session.resume();
                     this.status = Status.PLAYING;
                 }
             },
             '⏹': async () => {
-                console.log('stop');
                 await this.session.terminateConnection();
             },
             '⏪': async () => {
-                console.log('Rewind');
                 if (!this.session.dispatcher || !this.session.currentlyPlaying) return;
                 await this.session.seek(seekOffset(-30));
             },
             '⏩': async () => {
-                console.log('Fast forward');
                 if (!this.session.dispatcher || !this.session.currentlyPlaying) return;
                 await this.session.seek(seekOffset(30));
             },
@@ -148,7 +143,6 @@ export class MusicMessagePlayer extends EventEmitter {
                 console.log('Previous');
             },
             '▶': async () => {
-                console.log('Next');
                 await this.session.skip();
             }
         }
@@ -172,7 +166,10 @@ export class MusicMessagePlayer extends EventEmitter {
 
     private beginUpdates() {
         let id = setInterval(async () => {
-            if (!this.playerMessage) clearInterval(id);
+            if (!this.playerMessage) {
+                clearInterval(id);
+                return;
+            }
             await this.update();
         }, this.updateInterval);
     }
