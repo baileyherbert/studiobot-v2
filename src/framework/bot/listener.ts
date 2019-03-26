@@ -3,6 +3,7 @@ import { Logger } from './logger';
 
 export class Listener {
     private logger: Logger;
+    private listeners: {name: string, input: any}[] = [];
 
     constructor() {
         this.logger = new Logger('listener:' + this.constructor.name.toLowerCase());
@@ -22,6 +23,8 @@ export class Listener {
         let { Framework } = require('../framework');
         let client = Framework.client as Client;
 
+        this.listeners = [];
+
         client.on('channelCreate', this.onChannelCreate.bind(this));
         client.on('channelDelete', this.onChannelDelete.bind(this));
         client.on('channelPinsUpdate', this.onChannelPinsUpdate.bind(this));
@@ -35,32 +38,32 @@ export class Listener {
         client.on('guildBanAdd', this.onGuildBanAdd.bind(this));
         client.on('guildBanRemove', this.onGuildBanRemove.bind(this));
 
-        client.on('guildCreate', async (guild: Guild) => {
+        this.local(client, 'guildCreate', async (guild: Guild) => {
             await guild.load();
             await this.run(this.onGuildCreate(guild));
         });
 
-        client.on('guildDelete', async (guild: Guild) => {
+        this.local(client, 'guildDelete', async (guild: Guild) => {
             await guild.load();
             await this.run(this.onGuildDelete(guild));
         });
 
-        client.on('guildMemberAdd', async (member: GuildMember) => {
+        this.local(client, 'guildMemberAdd', async (member: GuildMember) => {
             await member.load();
             await this.run(this.onGuildMemberAdd(member));
         });
 
-        client.on('guildMemberAvailable', async (member: GuildMember) => {
+        this.local(client, 'guildMemberAvailable', async (member: GuildMember) => {
             await member.load();
             await this.run(this.onGuildMemberAvailable(member));
         });
 
-        client.on('guildMemberRemove', async (member: GuildMember) => {
+        this.local(client, 'guildMemberRemove', async (member: GuildMember) => {
             await member.load();
             await this.run(this.onGuildMemberRemove(member));
         });
 
-        client.on('guildMemberUpdate', async (om: GuildMember, nm: GuildMember) => {
+        this.local(client, 'guildMemberUpdate', async (om: GuildMember, nm: GuildMember) => {
             await om.load();
             await nm.load();
             await this.run(this.onGuildMemberUpdate(om, nm));
@@ -71,7 +74,7 @@ export class Listener {
         client.on('guildUnavailable', this.onGuildUnavailable.bind(this));
         client.on('guildUpdate', this.onGuildUpdate.bind(this));
 
-        client.on('message', async (message: Message) => {
+        this.local(client, 'message', async (message: Message) => {
             if (message.member) {
                 await message.member.load();
                 await message.guild.load();
@@ -80,7 +83,7 @@ export class Listener {
             await this.run(this.onMessage(message));
         });
 
-        client.on('messageDelete', async (message: Message) => {
+        this.local(client, 'messageDelete', async (message: Message) => {
             if (message.member) {
                 await message.member.load();
                 await message.guild.load();
@@ -104,6 +107,55 @@ export class Listener {
         client.on('userUpdate', this.onUserUpdate.bind(this));
         client.on('voiceStateUpdate', this.onVoiceStateUpdate.bind(this));
         client.on('warn', this.onWarn.bind(this));
+    }
+
+    /**
+     * Stops the listeners.
+     */
+    public stop() {
+        let { Framework } = require('../framework');
+        let client = Framework.client as Client;
+
+        // First the static ones
+        client.removeListener('channelCreate', this.onChannelCreate.bind(this));
+        client.removeListener('channelDelete', this.onChannelDelete.bind(this));
+        client.removeListener('channelPinsUpdate', this.onChannelPinsUpdate.bind(this));
+        client.removeListener('channelUpdate', this.onChannelUpdate.bind(this));
+        client.removeListener('debug', this.onDebug.bind(this));
+        client.removeListener('disconnect', this.onDisconnect.bind(this));
+        client.removeListener('emojiCreate', this.onEmojiCreate.bind(this));
+        client.removeListener('emojiDelete', this.onEmojiDelete.bind(this));
+        client.removeListener('emojiUpdate', this.onEmojiUpdate.bind(this));
+        client.removeListener('error', this.onError.bind(this));
+        client.removeListener('guildBanAdd', this.onGuildBanAdd.bind(this));
+        client.removeListener('guildBanRemove', this.onGuildBanRemove.bind(this));
+        client.removeListener('guildMembersChunk', this.onGuildMembersChunk.bind(this));
+        client.removeListener('guildMemberSpeaking', this.onGuildMemberSpeaking.bind(this));
+        client.removeListener('guildUnavailable', this.onGuildUnavailable.bind(this));
+        client.removeListener('guildUpdate', this.onGuildUpdate.bind(this));
+        client.removeListener('messageDeleteBulk', this.onMessageDeleteBulk.bind(this));
+        client.removeListener('messageReactionAdd', this.onMessageReactionAdd.bind(this));
+        client.removeListener('messageReactionRemove', this.onMessageReactionRemove.bind(this));
+        client.removeListener('messageReactionRemoveAll', this.onMessageReactionRemoveAll.bind(this));
+        client.removeListener('messageUpdate', this.onMessageUpdate.bind(this));
+        client.removeListener('presenceUpdate', this.onPresenceUpdate.bind(this));
+        client.removeListener('rateLimit', this.onRateLimit.bind(this));
+        client.removeListener('reconnecting', this.onReconnecting.bind(this));
+        client.removeListener('resume', this.onResume.bind(this));
+        client.removeListener('roleCreate', this.onRoleCreate.bind(this));
+        client.removeListener('roleDelete', this.onRoleDelete.bind(this));
+        client.removeListener('roleUpdate', this.onRoleUpdate.bind(this));
+        client.removeListener('userUpdate', this.onUserUpdate.bind(this));
+        client.removeListener('voiceStateUpdate', this.onVoiceStateUpdate.bind(this));
+        client.removeListener('warn', this.onWarn.bind(this));
+
+        // Now the dynamic ones
+        this.listeners.forEach(listener => {
+            client.removeListener(listener.name, listener.input);
+        });
+
+        // Reset array
+        this.listeners = [];
     }
 
     /**
@@ -402,6 +454,12 @@ export class Listener {
      * @prop {string} info The warning
      */
     public onWarn(info: string): Promise<void> | void {}
+
+    private local<T>(client: any, name: any, input: T): T {
+        client.on(name, input);
+        this.listeners.push({ name, input });
+        return input;
+    }
 }
 
 type RateLimitObject = {
