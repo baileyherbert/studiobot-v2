@@ -18,13 +18,16 @@ import { Database } from './lib/database';
 
 import chalk from 'chalk';
 import { Documentation } from '@bot/libraries/documentation';
+import { Filesystem } from './internal/filesystem';
 
 export class Framework {
     private static config: BotConfiguration;
     private static client: Client;
     private static logger: Logger;
-    private static commands: Command[] = [];
     private static server?: Server;
+
+    private static commands: { instance: Command, filePath: string, className: string }[] = [];
+    private static listeners: { instance: Listener, filePath: string, className: string }[] = [];
 
     /**
      * Starts the bot.
@@ -59,6 +62,9 @@ export class Framework {
                 this.listen();
 
                 this.logger.info('Bot is online...');
+
+                // Start watching files for changes
+                Filesystem.watch();
             });
         }
         else {
@@ -250,7 +256,7 @@ export class Framework {
                             let instance = new command();
 
                             if (instance instanceof Command) {
-                                this.commands.push(instance);
+                                this.commands.push({ instance, filePath, className });
                             }
                         }
                     }
@@ -288,6 +294,7 @@ export class Framework {
                             let instance = new listener();
 
                             if (instance instanceof Listener) {
+                                this.listeners.push({ instance, filePath, className });
                                 instance.start();
                             }
                         }
@@ -493,8 +500,8 @@ export class Framework {
         for (let i = 0; i < this.commands.length; i++) {
             let command = this.commands[i];
 
-            if (command.hasAlias(name)) {
-                return command;
+            if (command.instance.hasAlias(name)) {
+                return command.instance;
             }
         }
 
@@ -505,7 +512,73 @@ export class Framework {
      * Returns all running commands in the framework.
      */
     public static getCommands() : Command[] {
-        return this.commands;
+        let commands : Command[] = [];
+
+        this.commands.forEach(entry => {
+            commands.push(entry.instance);
+        });
+
+        return commands;
+    }
+
+    /**
+     * Returns all running listeners in the framework.
+     */
+    public static getListeners() : Listener[] {
+        let listeners : Listener[] = [];
+
+        this.listeners.forEach(entry => {
+            listeners.push(entry.instance);
+        });
+
+        return listeners;
+    }
+
+    /**
+     * Reloads all commands and listeners from the disk. This does not clear cache automatically, so unless you do that,
+     * it will reload the same cached code as before.
+     */
+    public static reload() {
+        this.commands.forEach(command => {
+            this.reloadEntry(command);
+        });
+
+        this.listeners.forEach(listener => {
+            listener.instance.stop();
+            this.reloadEntry(listener);
+        });
+    }
+
+    /**
+     * Reloads a given command or listener entry.
+     */
+    private static reloadEntry(entry: any) {
+        let type = (entry instanceof Command) ? 'command' : 'listener';
+
+        // Warn if the command file no longer exists
+        if (!fs.existsSync(entry.filePath)) {
+            this.getLogger().warning(`Cannot reload ${type} "${entry.className}" because its file was deleted: ${entry.filePath}`);
+            return;
+        }
+
+        try {
+            // Require the new file and get its export
+            let exported = require(entry.filePath);
+            let object = exported[entry.className];
+
+            // Warn if the export has gone missing
+            if (!object) {
+                this.getLogger().warning(`Cannot reload ${type} "${entry.className}" because its file no longer exports that class: ${entry.filePath}`);
+                return;
+            }
+
+            // Set the new instance
+            entry.instance = new object();
+        }
+        catch (e) {
+            this.getLogger().warning(`Encountered an error when reloading ${type} "${entry.className}"`);
+            this.getLogger().warning(e);
+        }
     }
 }
 
