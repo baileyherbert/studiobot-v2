@@ -64,7 +64,7 @@ export class Framework {
                 this.logger.info('Bot is online...');
 
                 // Start watching files for changes
-                Filesystem.watch();
+                if (this.getEnvironment() == 'test') Filesystem.watch();
             });
         }
         else {
