@@ -24,6 +24,7 @@
         "lodash": "^4.17.11",
         "moment": "^2.24.0",
         "node-opus": "^0.3.1",
+        "node-watch": "^0.6.0",
         "queue": "^5.0.1",
         "random-number-csprng": "^1.0.2",
         "request": "^2.88.0",
@@ -37,7 +38,7 @@
         "@types/cheerio": "^0.22.11",
         "@types/lodash": "^4.14.123",
         "@types/mocha": "^5.2.6",
-        "@types/node": "^11.11.3",
+        "@types/node": "^11.11.7",
         "@types/request": "^2.48.1",
         "@types/socket.io": "^2.1.2",
         "@types/sqlite3": "^3.1.5",
@@ -45,6 +46,6 @@
         "mocha": "^6.0.2",
         "source-map-support": "^0.5.11",
         "ts-node": "^8.0.3",
-        "typescript": "^3.3.3333"
+        "typescript": "^3.3.4000"
     }
 }
