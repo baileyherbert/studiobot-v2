@@ -1,18 +1,7 @@
 import { Command, Input, Listener } from '@api';
 import * as request from 'request';
-import { Response } from 'request';
 import { Message } from 'discord.js';
-import { RichEmbed } from 'discord.js';
-import { TextChannel } from 'discord.js';
 import { Emoji } from '@bot/libraries/emoji';
-import { Reactions } from '@bot/libraries/reactions';
-import { Framework } from '@core/framework';
-import { Timer } from '@bot/libraries/utilities/timer';
-import { ReactionListener } from '@bot/listeners/reactions';
-import { listeners } from 'cluster';
-import { GuildMember } from 'discord.js';
-import { Economy } from "@libraries/economy";
-import { debug } from 'util';
 import { Url } from 'url';
 const entities = require("html-entities").AllHtmlEntities;
 
@@ -170,12 +159,14 @@ export class Dog extends Command {
 
     async execute(input: Input) {
         let breed = input.getArgument('breed') as string;
-        let url = 'https://dog.ceo/api/breed';
+        let breedUrl = 'https://dog.ceo/api/breed';
+        let cuteUrl = 'https://some-random-api.ml/img/dog';
+        let url : string;
         if(breed == '') {
-            url = `${url}s/image/random`;
+            url = cuteUrl;
         }
         else{
-            url = `${url}/${encodeURIComponent(breed)}/images/random`
+            url = `${breedUrl}/${encodeURIComponent(breed)}/images/random`;
         }
 
         console.log(url);
@@ -191,6 +182,8 @@ export class Dog extends Command {
 
             //Parse the body
             let parsed = <ApiResponse>JSON.parse(body);
+            console.log(parsed);
+            let parsedBody = parsed.message==null ? parsed.link : parsed.message;  
 
             // Delete the loading message
             try { await message.delete(); } catch(err) {}
@@ -200,7 +193,7 @@ export class Dog extends Command {
                     color: 3447003,
                     image:
                     {
-                        url: parsed.message
+                        url: parsedBody
                     }
             }
             });
@@ -211,4 +204,9 @@ export class Dog extends Command {
 
 type ApiResponse = {
     message: Url; 
+    link: Url;
 };
+
+// type ApiResponseCute = {
+    
+// };
