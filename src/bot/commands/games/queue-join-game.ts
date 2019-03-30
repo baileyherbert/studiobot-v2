@@ -31,7 +31,7 @@ export class QueueJoinGame extends Command {
                 {
                     name: 'action',
                     required: true,
-                    options: ['start', 'join']
+                    options: ['start', 'join', 'abort']
                 },
                 /*{
                     name: 'gameType',
@@ -56,8 +56,11 @@ export class QueueJoinGame extends Command {
         if (action == 'start') {
             this.start(input, options);
         }
-        else {
-            this.join(input, options);
+        else if (action == 'join') {
+            this.join(input, options, action);
+        }
+        else if (action == 'abort') {
+            this.abort(input, options, action);
         }
     }
 
@@ -100,10 +103,10 @@ export class QueueJoinGame extends Command {
      * @param input
      * @param options
      */
-    private join(input: Input, options: string | undefined) {
+    private join(input: Input, options: string | undefined, action: string) {
         let lobbiesInServer = this.lobbyManager.GetLobbiesInChannel(input.guild, input.channel);
         let message = "Lobbies:";
-        this.DisplayAllLobbies(lobbiesInServer, message, input);
+        this.DisplayAllLobbies(lobbiesInServer, message, input, action);
 
         const filter = (number: number) => !isNaN(number)
             && this.NumberIsValidLobby(number, lobbiesInServer)
@@ -123,6 +126,27 @@ export class QueueJoinGame extends Command {
             else{
                 //Do nothing
             }
+        });
+    }
+
+    private abort(input: Input, options: string | undefined, action: string) {
+        let lobbiesInServer = this.lobbyManager.GetLobbiesInChannel(input.guild, input.channel);
+        if (lobbiesInServer.length <= 0){
+            input.channel.send("No lobbies to delete");
+            return;
+        }
+
+        let message = "Lobbies:";
+        this.DisplayAllLobbies(lobbiesInServer, message, input, action);
+
+        const filter = (number: number) => !isNaN(number)
+            && this.NumberIsValidLobby(number, lobbiesInServer)
+            && !this.IsAlreadyInLobby(lobbiesInServer, number, input.member);
+        const collector = input.channel.createMessageCollector(filter);
+
+        let self = this;
+        collector.once('collect', function(number: number) {
+            self.lobbyManager.FindAndRemoveLobby(lobbiesInServer[number]);
         });
     }
 
@@ -190,7 +214,7 @@ export class QueueJoinGame extends Command {
      * @param message
      * @param input
      */
-    private DisplayAllLobbies(lobbiesInServer: Lobby[], message: string, input: Input) {
+    private DisplayAllLobbies(lobbiesInServer: Lobby[], message: string, input: Input, action: string) {
         for (let index = 0; index < lobbiesInServer.length; index++) {
             let currentLobby = lobbiesInServer[index];
 
@@ -211,7 +235,7 @@ export class QueueJoinGame extends Command {
 
         //input.channel.send(message);
         input.channel.send("```" + message + "```");
-        input.channel.send("Select the lobby you wish to join");
+        input.channel.send(`Select the lobby you wish to ${action}`);
         //input.channel.send(message.replace(/(.+|\n+)/g, '```$1```'));
     }
 

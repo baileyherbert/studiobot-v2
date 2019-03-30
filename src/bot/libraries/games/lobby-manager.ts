@@ -66,6 +66,8 @@ export class LobbyManager {
     }
 
     RemoveLobby(lobbyIndex: number){
+        let lobby: Lobby = this.lobbies[lobbyIndex];
         this.lobbies.splice(lobbyIndex);
+        lobby.ShutDown();
     }
 }
