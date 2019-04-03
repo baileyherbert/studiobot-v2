@@ -13,6 +13,7 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
+        "@sentry/node": "^5.0.3",
         "chalk": "^2.4.2",
         "cheerio": "^1.0.0-rc.2",
         "cleverbot-api": "^1.0.3",

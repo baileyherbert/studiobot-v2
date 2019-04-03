@@ -20,6 +20,8 @@ import chalk from 'chalk';
 import { Documentation } from '@bot/libraries/documentation';
 import { Filesystem } from './internal/filesystem';
 
+import * as Sentry from '@sentry/node';
+
 export class Framework {
     private static config: BotConfiguration;
     private static client: Client;
@@ -37,6 +39,7 @@ export class Framework {
 
         // Bootstrap
         this.loadConfiguration();
+        this.initErrorHandling();
         this.startServer();
         this.bindGracefulShutdown();
 
@@ -133,6 +136,22 @@ export class Framework {
      */
     public static getEnvironment() : ('test' | 'production') {
         return this.config.environment;
+    }
+
+    /**
+     * Initializes Sentry as an error handler. This only applies to production.
+     */
+    private static initErrorHandling() {
+        if (this.getEnvironment() == 'test') return;
+        Sentry.init({ dsn: 'https://f4db4df28f50465681c4015b68561e9e@sentry.io/1430072' });
+    }
+
+    /**
+     * Reports an exception.
+     */
+    public static reportException(error: Error) {
+        if (this.getEnvironment() == 'test') return;
+        Sentry.captureException(error);
     }
 
     /**
@@ -264,6 +283,7 @@ export class Framework {
                 catch (error) {
                     this.logger.error(`Encountered an error when loading commands/${fileName}:`);
                     this.logger.error(error);
+                    this.reportException(error);
                 }
             });
         }
@@ -303,6 +323,7 @@ export class Framework {
                 catch (error) {
                     this.logger.error(`Encountered an error when loading listeners/${fileName}:`);
                     this.logger.error(error);
+                    this.reportException(error);
                 }
             });
         }
@@ -329,6 +350,7 @@ export class Framework {
                 catch (error) {
                     this.logger.error(`Encountered an error when loading scripts/${fileName}:`);
                     this.logger.error(error);
+                    this.reportException(error);
                 }
             });
         }
@@ -367,6 +389,7 @@ export class Framework {
                 catch (error) {
                     this.logger.error(`Encountered an error when loading jobs/${fileName}:`);
                     this.logger.error(error);
+                    this.reportException(error);
                 }
             });
         }
@@ -455,6 +478,8 @@ export class Framework {
                                 returned.catch((error : Error) => {
                                     this.logger.error(`Encountered an error when running ${commandName} command:`);
                                     this.logger.error(error);
+                                    this.reportException(error);
+
                                     input.channel.send(':tools:  Internal error, check console.');
                                 });
                             }
@@ -468,6 +493,7 @@ export class Framework {
                     catch (error) {
                         this.logger.error(`Encountered an error when running ${commandName} command:`);
                         this.logger.error(error);
+                        this.reportException(error);
 
                         if (this.getEnvironment() == 'test') input.channel.send(':tools:  Internal error, check console.');
                         else input.channel.send(':tools:  Sorry, I ran into an error.');
