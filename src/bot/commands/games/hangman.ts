@@ -64,12 +64,12 @@ export class Hangman extends Command {
         game.on('guess', async (correct: boolean) => {
             let text = correct ? 'Found a new letter! Keep guessing!' : 'That letter was not in the word. Keep guessing!';
 
-            //lastMessage.deleteAfter(5000);
+            lastMessage.deleteAfter(0);
             lastMessage = await input.channel.send(text + '\n' + game.getBoard()) as Message;
         });
 
         game.on('finished', async (win: boolean) => {
-            //lastMessage.deleteAfter(5000);
+            lastMessage.deleteAfter(0);
 
             // Stop the collector
             collector.stop();
