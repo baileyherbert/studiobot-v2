@@ -37,6 +37,11 @@ export class Hangman extends Command {
                 return;
             }
 
+            if (err.message == 'Cannot send messages to this user') {
+                await input.channel.send(`${input.member} I couldn't send you a direct message to start the hangman game.`);
+                return;
+            }
+
             await input.channel.send('Host cancelled the game.') as Message;
             return;
         }
