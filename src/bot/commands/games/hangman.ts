@@ -81,6 +81,19 @@ export class Hangman extends Command {
             let phrase = '\n```' + word + '\n```';
             await input.channel.send((win ? 'The word or phrase was guessed correctly!' : 'The word or phrase was not guessed!') + phrase);
         });
+
+        game.on('expired', async() => {
+            lastMessage.deleteAfter(0);
+
+            // Stop the collector
+            collector.stop();
+
+            // Expire the game
+            delete this.games[input.channel.id];
+
+            // Show output
+            await input.channel.send(`The hangman game was ended due to inactivity.`);
+        });
     }
 
     /**
