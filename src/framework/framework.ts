@@ -32,13 +32,16 @@ export class Framework {
     /**
      * Starts the bot.
      */
-    private static start() {
+    private static async start() {
         this.logger = new Logger();
 
         // Bootstrap
         this.loadConfiguration();
         this.startServer();
         this.bindGracefulShutdown();
+
+        // Connect to the database
+        await this.startDatabase();
 
         if (!CommandLine.hasFlag('dry')) {
             // Start the client
@@ -161,11 +164,24 @@ export class Framework {
                 environment: 'test',
                 options: { allowCodeExecution: false, loggingLevel: 'normal' },
                 server: { enabled: true, port: 3121 },
-                authentication: { discord: { token: '' }, cleverbot: { key: '' }, openWeatherMap: { key: '' }}
+                authentication: { discord: { token: '' }, cleverbot: { key: '' }, openWeatherMap: { key: '' }},
+                database: { host: 'localhost', port: 3306, name: 'ember', username: 'root', password: '' }
             } as BotConfiguration, null, 4));
 
             return welcome();
         }
+    }
+
+    /**
+     * Starts the database.
+     */
+    private static async startDatabase() {
+        let host = this.config.database.host;
+        let port = this.config.database.port;
+
+        this.logger.verbose(`Connecting to database at ${host}:${port}...`);
+        await Database.connect();
+        this.logger.verbose(`Connected successfully.`);
     }
 
     /**
@@ -207,6 +223,10 @@ export class Framework {
 
             // Stop the client
             await this.client.destroy();
+
+            // Stop the database
+            this.logger.verbose('Closing database...');
+            await Database.close();
 
             // Stop the server if it is active
             if (this.server) {
@@ -592,7 +612,7 @@ type BotConfiguration = {
     server: {
         enabled: boolean;
         port?: number;
-    }
+    };
     authentication: {
         discord: {
             token: string
@@ -603,5 +623,12 @@ type BotConfiguration = {
         openWeatherMap: {
             key: string;
         };
-    }
+    };
+    database: {
+        host: string;
+        port: number;
+        name: string;
+        username: string;
+        password: string;
+    };
 };
