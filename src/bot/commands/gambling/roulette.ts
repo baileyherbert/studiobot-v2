@@ -22,7 +22,7 @@ export class Roulette extends Command {
         super({
             name: 'roulette',
             description: 'Starts a game of wheel of fortune. If it lands on your number, your bet is multiplied by that number. If it doesn\'t, say goodbye to your cash.',
-            aliases: ['spin', 'wheel', 'fortune']
+            aliases: ['spin', 'wheel']
         });
 
         // Preload the pointer image via Jimp

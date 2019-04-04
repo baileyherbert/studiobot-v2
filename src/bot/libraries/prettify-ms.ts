@@ -35,6 +35,21 @@ export function ParseTimeToUnits(ms: number): ParsedTime {
     };
 }
 
+export function parseDuration(ms: number) {
+    let result = '';
+    let hr = 3600;
+    let min = 60;
+    let timePad = (n: number) => _.padStart(Math.floor(n).toString(), 2, '0');
+
+    if (ms > hr) {
+        result += `${timePad(ms / hr)}:`;
+        ms %= hr;
+    }
+
+    result += `${timePad(ms / min)}:${timePad(ms % min)}`;
+    return result;
+}
+
 export function prettify(ms: number, options: FormatOptions = {}) {
 
     if (!Number.isFinite(ms)) {

@@ -183,7 +183,7 @@ export class Dog extends Command {
             //Parse the body
             let parsed = <ApiResponse>JSON.parse(body);
             console.log(parsed);
-            let parsedBody = parsed.message==null ? parsed.link : parsed.message;  
+            let parsedBody = parsed.message==null ? parsed.link : parsed.message;
 
             // Delete the loading message
             try { await message.delete(); } catch(err) {}
@@ -203,10 +203,10 @@ export class Dog extends Command {
 }
 
 type ApiResponse = {
-    message: Url; 
+    message: Url;
     link: Url;
 };
 
 // type ApiResponseCute = {
-    
+
 // };

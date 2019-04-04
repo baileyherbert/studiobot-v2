@@ -58,6 +58,23 @@ export class Documentation {
     }
 
     /**
+     * Returns a list of formatted aliases for the given command.
+     */
+    public static getAliasList(command: Command) {
+        let aliases : string[] = [];
+
+        command.getAliases().forEach(alias => {
+            // Aliases include the command's actual name, so filter it out
+            if (alias.equals(command.getName())) return;
+
+            // Surround with inline code blocks
+            aliases.push('`' + alias + '`');
+        });
+
+        return aliases.join(',  ');
+    }
+
+    /**
      * Returns a string with the full detailed help information for a command.
      */
     public static getCommandHelp(command: Command) : RichEmbed {
@@ -71,6 +88,14 @@ export class Documentation {
             fields.push({
                 name: 'Arguments',
                 value: Documentation.getArgumentDetails(command)
+            });
+        }
+
+        // If there are aliases, add them to the fields
+        if (command.getAliases().length > 1) {
+            fields.push({
+                name: 'Aliases',
+                value: Documentation.getAliasList(command)
             });
         }
 

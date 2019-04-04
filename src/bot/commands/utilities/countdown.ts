@@ -35,7 +35,7 @@ export class Countdown extends Command {
 
         countdown.run();
         await countdown.wait();
-        await countdownMessage.edit(`${Emoji.SUCCESS}  **${startTime} second${startTime > 1 ? '\'s' : ''} timer is done!**`);
+        await countdownMessage.edit(`${Emoji.SUCCESS}  **${startTime} second${startTime > 1 ? 's' : ''} have lapsed**`);
 
         countdownMessage.deleteAfter(6000);
     }

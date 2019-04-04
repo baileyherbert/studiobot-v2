@@ -132,8 +132,8 @@ export class QueueJoinGame extends Command {
 
     /**
      * Checks if the message contains any game type
-     * 
-     * @param message 
+     *
+     * @param message
      */
     private CompareGameType(message : Message) : boolean {
         let content : string = message.content;
@@ -145,7 +145,7 @@ export class QueueJoinGame extends Command {
 
     /**
      * Creates regex string to detect a single game type, Used to determine the specific type of game that a lobby will contain
-     * 
+     *
      * @param gameTypeIndex
      */
     private CreateGameTypeRegexpString(gameTypeIndex: number) : string {
@@ -200,7 +200,7 @@ export class QueueJoinGame extends Command {
             if (currentLobby.GetPlayer(2) !== null) {
                 message += this.AddPlayerNameToMessage(currentLobby.GetPlayer(2) as GuildMember);
             }
-            
+
             console.log(lobbiesInServer[index].GetType());
             message += String(lobbiesInServer[index].GetType());
         }
@@ -234,6 +234,10 @@ export class QueueJoinGame extends Command {
      * Check if lobby has vacancies
      */
     private IsLobbyOpen(lobbiesInServer: Lobby[], number: number) {
+        if (!lobbiesInServer[number]) {
+            return false;
+        }
+
         return lobbiesInServer[number].GetPlayer(1) === null || lobbiesInServer[number].GetPlayer(2) === null;
     }
 

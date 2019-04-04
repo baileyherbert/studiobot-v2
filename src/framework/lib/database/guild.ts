@@ -1,9 +1,16 @@
 import { Database } from "../database";
+import * as squel from 'squel';
 
 export class GuildBucket {
     protected id: string;
     protected rowExists: boolean = false;
     protected status: Status;
+    protected map : {[column: string]: string} = {
+        prefix: 'prefix',
+        voice: 'voice',
+        notifications: 'notifications',
+        quotes: 'quotes'
+    };
 
     /**
      * The prefix to use for the guild.
@@ -56,29 +63,47 @@ export class GuildBucket {
             throw new Error('Attempted to save a GuildBucket which has not been loaded.');
         }
 
-        // Duplicate this object
-        let o : any = _.clone(this);
+        // Update an existing row
+        if (this.rowExists) {
+            let query = squel.update()
+                .table('guilds', 'm')
+                .where('m.id = ?', this.id);
 
-        // Remove functions and irrelevant variables
-        _.each(o, (val, key) => {
-            if (typeof val == 'function' || key == 'id' || key == 'rowExists' || key == 'status') {
-                delete o[key];
+            // Add columns
+            for (let column in this.map) {
+                let value = (this as any)[column] as any;
+
+                // Convert values
+                if (typeof value == 'object') value = 'json:' + JSON.stringify(value);
+                if (typeof value == 'undefined') value = null;
+
+                // Insert value
+                query.set(this.map[column], value);
             }
-        });
 
-        // Encode with JSON
-        let json = JSON.stringify(o, null, 4);
-
-        // Does the row exist?
-        let exists = this.rowExists;
-
-        // Run the query
-        if (exists) {
-            await Database.run('UPDATE guilds SET settings = ? WHERE id = ?', json, this.id);
+            await Database.run(query.toString());
         }
+
+        // Insert a new row
         else {
+            let query = squel.insert()
+                .into('guilds')
+                .set('id', this.id);
+
+            // Add columns
+            for (let column in this.map) {
+                let value = (this as any)[column] as any;
+
+                // Convert values
+                if (typeof value == 'object') value = 'json:' + JSON.stringify(value);
+                if (typeof value == 'undefined') value = null;
+
+                // Insert value
+                query.set(this.map[column], value);
+            }
+
+            await Database.run(query.toString());
             this.rowExists = true;
-            await Database.run('INSERT INTO guilds (id, settings) VALUES (?, ?)', this.id, json);
         }
     }
 
@@ -94,20 +119,23 @@ export class GuildBucket {
         this.status.loading = true;
 
         // Get the database row
-        let row = await Database.get<GuildRow>('SELECT * FROM guilds WHERE id = ?', this.id);
+        let rows = await Database.query<any[]>('SELECT * FROM guilds WHERE id = ? LIMIT 1', this.id);
+        let row = (rows.length > 0) ? rows[0] : undefined;
 
         // If the row exists, parse its data
         if (row) {
             this.rowExists = true;
 
-            if (row.settings) {
-                let settings = JSON.parse(row.settings);
-                let o = _.defaultsDeep(settings, this);
+            for (let column in this.map) {
+                let realName = this.map[column];
+                let value = row[realName];
 
-                _.each(o, (val, key) => {
-                    if (key == 'id' || key == 'rowExists' || key == 'status') return;
-                    (this as any)[key] = val;
-                });
+                // Decode value
+                if (value == null) value = undefined;
+                if (typeof value == 'string' && value.startsWith('json:')) value = JSON.parse(value.substring(5));
+
+                // Restore the value
+                (this as any)[column] = value;
             }
         }
 

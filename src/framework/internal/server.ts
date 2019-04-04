@@ -1,7 +1,6 @@
 import * as SocketIO from 'socket.io';
 import { Server as SocketServer } from 'socket.io';
 import { Framework } from '@core/framework';
-import { ChatLogStatus } from '@bot/listeners/chatlog';
 
 export class Server {
 
@@ -33,9 +32,17 @@ export class Server {
                 });
             });
 
-            // Chat logging
-            socket.on('chat', (enabled: string) => {
-                ChatLogStatus.active = (enabled.equalsIgnoreCase('on') || enabled.equalsIgnoreCase('yes'));
+            // Send test announcements
+            socket.on('announce:test', (message: string) => {
+                let target = Framework.getClient().guilds.get('535655348858519572');
+
+                if (target) {
+                    let channel = target.getDefaultChannel();
+
+                    if (channel) {
+                        channel.send(`:loudspeaker:  ${message}`);
+                    }
+                }
             });
 
             // Stop the bot
