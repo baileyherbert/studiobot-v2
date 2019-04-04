@@ -47,6 +47,7 @@ export class Database {
      */
     public static close() : Promise<void> {
         return new Promise((resolve, reject) => {
+            if (!this.connection) return resolve();
             this.connection.end(err => {
                 resolve();
             });
@@ -82,6 +83,24 @@ export class Database {
      */
     public static getConnection() {
         return this.connection;
+    }
+
+    /**
+     * Returns the current version of the database schema. This will return `undefined` if the database is unavailable
+     * or if the database has not yet been set up.
+     */
+    public static getSchemaVersion() : Promise<string | undefined> {
+        return new Promise(async resolve => {
+            try {
+                let rows = await this.query(`SELECT * FROM meta WHERE name = 'schema_version';`);
+
+                if (rows.length !== 1) return resolve(undefined);
+                return resolve(rows[0].value);
+            }
+            catch (err) {
+                resolve(undefined);
+            }
+        });
     }
 }
 

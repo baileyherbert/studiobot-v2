@@ -19,9 +19,12 @@ import { Database } from './lib/database';
 import chalk from 'chalk';
 import { Documentation } from '@bot/libraries/documentation';
 import { Filesystem } from './internal/filesystem';
+import { SqliteMigration } from './lib/migrations/SqliteMigration';
 
 export class Framework {
     private static config: BotConfiguration;
+    private static interface: readline.Interface;
+
     private static client: Client;
     private static logger: Logger;
     private static server?: Server;
@@ -176,12 +179,41 @@ export class Framework {
      * Starts the database.
      */
     private static async startDatabase() {
+        if (!this.config.database) {
+            let migration = new SqliteMigration();
+            let database = await migration.run();
+        }
+
         let host = this.config.database.host;
         let port = this.config.database.port;
 
         this.logger.verbose(`Connecting to database at ${host}:${port}...`);
         await Database.connect();
         this.logger.verbose(`Connected successfully.`);
+
+        // Check to make sure the database is up to date
+        let version = await Database.getSchemaVersion();
+
+        // Run initial setup if version is undefined
+        if (!version) {
+            this.logger.info(`Setting up the database for the first time...`);
+
+            // Run the initial migration queries
+            let queries = readPublicFile('migrations/init.sql');
+            await Database.run(queries);
+
+            // Recheck the version
+            this.logger.info(`Checking the schema version...`);
+            version = await Database.getSchemaVersion();
+
+            if (!version) {
+                this.logger.error('Failed to run the initial migration queries.');
+                process.exit();
+            }
+            else {
+                this.logger.info(`Database migrated to version v${version} successfully.`);
+            }
+        }
     }
 
     /**
@@ -197,13 +229,13 @@ export class Framework {
      * Binds to CTRL+C on Windows and Linux in order to implement a graceful shutdown.
      */
     private static bindGracefulShutdown() {
-        if (process.platform === 'win32') {
-            let rl = readline.createInterface({
-                input: process.stdin,
-                output: process.stdout
-            });
+        this.interface = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
 
-            rl.on('SIGINT', () => {
+        if (process.platform === 'win32') {
+            this.interface.on('SIGINT', () => {
                 process.emit('SIGINT' as any);
             });
         }
@@ -222,7 +254,7 @@ export class Framework {
             this.logger.verbose('Waiting for client to sign off...');
 
             // Stop the client
-            await this.client.destroy();
+            if (this.client) await this.client.destroy();
 
             // Stop the database
             this.logger.verbose('Closing database...');
@@ -600,6 +632,13 @@ export class Framework {
             this.getLogger().warning(`Encountered an error when reloading ${type} "${entry.className}"`);
             this.getLogger().warning(e);
         }
+    }
+
+    /**
+     * Returns the readline interface for the bot.
+     */
+    public static getInterface() {
+        return this.interface;
     }
 }
 
