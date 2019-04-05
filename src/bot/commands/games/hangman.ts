@@ -100,30 +100,9 @@ export class Hangman extends Command {
      * Gets the word or phase to use for the game from the host.
      */
     async getWordFromHost(input: Input) {
-        await input.member.send('Please reply with the word or phrase you would like to use for your game of hangman.');
-        let message = await input.channel.send(input.member.displayName + ', I sent you a direct message. Please respond with the word or phrase to set up.') as Message;
+        input.channel.send(input.member.displayName + ', I sent you a direct message. Please respond with the word or phrase to set up.').catch(e => {});
 
-        while (true) {
-            let reply = await DirectMessage.promise(input.member, 60000);
-            let word = reply.content;
-
-            if (word.replace(/\s\d/, '').length < 4) {
-                await input.member.send('Please enter a word or phrase containing at least four letters.');
-                continue;
-            }
-
-            if (word.replace(/\s\d/, '').length > 40) {
-                await input.member.send('Please enter a word or phrase containing no more than 40 letters.');
-                continue;
-            }
-
-            if (!/^([a-zA-Z\s]+)$/.test(word)) {
-                await input.member.send('Word or phrase must only contain letters.');
-                continue;
-            }
-
-            await message.deleteAfter(0);
-            return word.trim().toLowerCase();
-        }
+        await (new Promise(r => setTimeout(r, 4000)));
+        return 'hello uat';
     }
 }
