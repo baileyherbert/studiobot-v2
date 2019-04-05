@@ -4,6 +4,7 @@ import { Message } from 'discord.js';
 import * as fs from 'fs';
 import { Emoji } from '@bot/libraries/emoji';
 import { Url } from 'url';
+import { pathMatch } from 'tough-cookie';
 const entities = require("html-entities").AllHtmlEntities;
 
 export class Bird extends Command {
@@ -16,7 +17,16 @@ export class Bird extends Command {
     }
 
     async execute(input: Input) {
-        fs.readFileSync("public/images/birds");
+        let dirPath : string = '/public/images/birds';
+        let images = fs.readdir(dirPath, 'binary', (err, files) => {
+            if(err){
+                console.log(files.join)
+            }
+        });
+        let rnd = Math.floor(Math.random() * images.length);
+
+
+        fs.readFile(dirPath, "binary" );
         let message = await input.channel.send(`${Emoji.LOADING}  Fetching image...`) as Message;
 
         input.channel.send({
