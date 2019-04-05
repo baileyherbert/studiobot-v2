@@ -9,11 +9,13 @@ export class asciiArt extends Command {
             description: 'Returns a random ASCII art from the text file.'
         });
     }
-    
+
     async execute(input: Input) {
-        let index = _.random(0, ascii.length - 1);
+        let index = _.random(1, ascii.length - 1);
         let line = ascii[index];
 
-        await input.channel.send('```\n' + line + '\n```'); 
+        line = line.replace(/`/g, '\\`');
+
+        await input.channel.send('```\n' + line + '\n```');
     }
 }
