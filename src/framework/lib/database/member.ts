@@ -84,6 +84,9 @@ export class MemberBucket {
      * Saves the current state of the guild.
      */
     public async save(): Promise<void> {
+        // Disable saving on presentation mode
+        return;
+
         // Throw an error if we haven't already loaded
         if (!this.status.loaded) {
             throw new Error('Attempted to save a MemberBucket which has not been loaded.');
