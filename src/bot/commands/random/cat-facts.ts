@@ -2,15 +2,14 @@ import { Command, Input, Listener } from '@api';
 import * as request from 'request';
 import { Message } from 'discord.js';
 import { Emoji } from '@bot/libraries/emoji';
-import { Url } from 'url';
 const entities = require("html-entities").AllHtmlEntities;
 
-export class CatFact extends Command {
+export class CatFacts extends Command {
     constructor() {
         super({
             name: 'catfact',
             description: 'Displays a random cat fact.',
-            aliases: ["cfact", "felinefact"]
+            aliases: ["cfact", "catfacts", "catf"]
         });
     }
 
@@ -22,7 +21,7 @@ export class CatFact extends Command {
         let message = await input.channel.send(`${Emoji.LOADING}  Fetching image...`) as Message;
 
         //Fetch from API
-        request(url, async (err, {headers}, body) => {
+        request(url, async (err, response, body) => {
             //Handle HTTP errors
             if (err) {
                 await message.edit(`${Emoji.ERROR}  Failed to get fact, try again later.`);
@@ -42,15 +41,15 @@ export class CatFact extends Command {
             input.channel.send({
                 embed: {
                     color: 3447003,
-                    Title: parsed.fact
+                    title: 'Cat Facts',
+                    description: parsed.fact
             }
             });
-
         });
     }
 }
 
 type ApiResponse = {
-    fact: string;
-    length: number
+    fact: string,
+    length: number;
 };
