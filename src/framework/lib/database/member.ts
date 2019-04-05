@@ -1,10 +1,23 @@
 import { Database } from "../database";
+import * as squel from 'squel';
 
 export class MemberBucket {
     protected id: string;
     protected guildId: string;
     protected rowExists: boolean = false;
     protected status: Status;
+    protected map : {[column: string]: string} = {
+        guildId: 'guild_id',
+        currency: 'currency',
+        inventory: 'inventory',
+        level: 'level',
+        experience: 'experience',
+        lastExperienceAwardTime: 'exp_award_time',
+        lastDailyRedeemTime: 'redeem_time',
+        nameHistory: 'name_history',
+        lastfmId: 'lastfm_id',
+        birthYear: 'birth_year'
+    };
 
     /**
      * The balance of the member.
@@ -76,29 +89,49 @@ export class MemberBucket {
             throw new Error('Attempted to save a MemberBucket which has not been loaded.');
         }
 
-        // Duplicate this object
-        let o : any = _.clone(this);
+        // Update an existing row
+        if (this.rowExists) {
+            let query = squel.update()
+                .table('members', 'm')
+                .where('m.id = ?', this.id)
+                .where('m.guild_id = ?', this.guildId);
 
-        // Remove functions and irrelevant variables
-        _.each(o, (val, key) => {
-            if (typeof val == 'function' || key == 'id' || key == 'rowExists' || key == 'guildId' || key == 'status') {
-                delete o[key];
+            // Add columns
+            for (let column in this.map) {
+                let value = (this as any)[column] as any;
+
+                // Convert values
+                if (typeof value == 'object') value = 'json:' + JSON.stringify(value);
+                if (typeof value == 'undefined') value = null;
+
+                // Insert value
+                query.set(this.map[column], value);
             }
-        });
 
-        // Encode with JSON
-        let json = JSON.stringify(o, null, 4);
-
-        // Does the row exist?
-        let exists = this.rowExists;
-
-        // Run the query
-        if (exists) {
-            await Database.run('UPDATE members SET settings = ? WHERE id = ? AND guild_id = ?', json, this.id, this.guildId);
+            await Database.run(query.toString());
         }
+
+        // Insert a new row
         else {
+            let query = squel.insert()
+                .into('members')
+                .set('id', this.id)
+                .set('guild_id', this.guildId);
+
+            // Add columns
+            for (let column in this.map) {
+                let value = (this as any)[column] as any;
+
+                // Convert values
+                if (typeof value == 'object') value = 'json:' + JSON.stringify(value);
+                if (typeof value == 'undefined') value = null;
+
+                // Insert value
+                query.set(this.map[column], value);
+            }
+
+            await Database.run(query.toString());
             this.rowExists = true;
-            await Database.run('INSERT INTO members (id, guild_id, settings) VALUES (?, ?, ?)', this.id, this.guildId, json);
         }
     }
 
@@ -114,20 +147,23 @@ export class MemberBucket {
         this.status.loading = true;
 
         // Get the database row
-        let row = await Database.get<MemberRow>('SELECT * FROM members WHERE id = ? AND guild_id = ?', this.id, this.guildId);
+        let rows = await Database.query<any[]>('SELECT * FROM members WHERE id = ? AND guild_id = ? LIMIT 1', this.id, this.guildId);
+        let row = (rows.length > 0) ? rows[0] : undefined;
 
         // If the row exists, parse its data
         if (row) {
             this.rowExists = true;
 
-            if (row.settings) {
-                let settings = JSON.parse(row.settings);
-                let o = _.defaultsDeep(settings, this);
+            for (let column in this.map) {
+                let realName = this.map[column];
+                let value = row[realName];
 
-                _.each(o, (val, key) => {
-                    if (key == 'id' || key == 'rowExists' || key == 'guildId' || key == 'status') return;
-                    (this as any)[key] = val;
-                });
+                // Decode value
+                if (value == null) value = undefined;
+                if (typeof value == 'string' && value.startsWith('json:')) value = JSON.parse(value.substring(5));
+
+                // Restore the value
+                (this as any)[column] = value;
             }
         }
 

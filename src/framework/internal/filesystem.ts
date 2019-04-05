@@ -15,7 +15,6 @@ export class Filesystem {
     public static watch() {
         this.watchDirectory(path.join(__dirname, '../../bot/'));
         this.watchDirectory(path.join(__dirname, '../bot/'));
-        this.watchDirectory(path.join(__dirname, '../lib/'));
     }
 
     /**

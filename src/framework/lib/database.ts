@@ -1,40 +1,26 @@
-import { Database as SqliteDb } from 'sqlite3';
-import * as path from 'path';
-import * as fs from 'fs';
+import * as mysql from 'mysql';
+import { Framework } from '@core/framework';
 
 const queue = require('queue')({ concurrency: 1, autostart: true, timeout: 60000 });
 
 export class Database {
-    private static file: SqliteDb;
+    private static connection: mysql.Connection;
 
     /**
-     * Runs the given query and does not retrieve any results.
+     * Runs the given query and returns information about the query.
      */
-    public static run(query: string, ...bindings: any[]) : Promise<void> {
+    public static run(query: string, ...bindings: any[]) : Promise<Transaction> {
         return new Promise((resolve, reject) => {
             queue.push((cb : () => void) => {
-                this.getFile().run(query, bindings, (error) => {
-                    if (error == null) resolve();
-                    else reject(error);
-
+                this.connection.query(query, bindings, (err, results) => {
                     cb();
-                });
-            });
-        });
-    }
 
-    /**
-     * Runs the given query and resolves with an object representing the first row or `undefined` if no rows were
-     * matched.
-     */
-    public static get<T = any>(query: string, ...bindings: any[]) : Promise<T|undefined> {
-        return new Promise((resolve, reject) => {
-            queue.push((cb : () => void) => {
-                this.getFile().get(query, bindings, (error, row) => {
-                    if (error == null) resolve(row);
-                    else reject(error);
-
-                    cb();
+                    if (err) return reject(err);
+                    resolve({
+                        affected: results.affectedRows,
+                        insertId: results.insertId,
+                        changed: results.changedRows
+                    });
                 });
             });
         });
@@ -43,14 +29,14 @@ export class Database {
     /**
      * Runs the given query and resolves with an array of all matched rows.
      */
-    public static all<T = any>(query: string, ...bindings: any[]) : Promise<T[]> {
+    public static query<T = any>(query: string, ...bindings: any[]) : Promise<T> {
         return new Promise((resolve, reject) => {
             queue.push((cb : () => void) => {
-                this.getFile().all(query, bindings, (error, row) => {
-                    if (error == null) resolve(row);
-                    else reject(error);
-
+                this.connection.query(query, bindings, (err, results) => {
                     cb();
+
+                    if (err) return reject(err);
+                    resolve(results);
                 });
             });
         });
@@ -61,33 +47,79 @@ export class Database {
      */
     public static close() : Promise<void> {
         return new Promise((resolve, reject) => {
-            if (!this.file) return resolve();
-
-            this.file.close((err) => {
-                if (err == null) resolve();
-                else reject(err);
+            if (!this.connection) return resolve();
+            this.connection.end(err => {
+                resolve();
             });
         });
     }
 
     /**
-     * Returns the database file, and opens it automatically if needed.
+     * Starts the database.
      */
-    private static getFile() : SqliteDb {
-        if (!this.file) {
-            let filePath = path.join(__dirname, '../../../data/storage');
-            let templatePath = path.join(__dirname, '../../../data/template');
+    public static connect() : Promise<void> {
+        return new Promise((resolve, reject) => {
+            let config = Framework.getConfig().database;
 
-            // If the database file doesn't exist, create it from the template
-            if (!fs.existsSync(filePath)) {
-                fs.copyFileSync(templatePath, filePath);
-            }
+            this.connection = mysql.createConnection({
+                host: config.host,
+                user: config.username,
+                password: config.password,
+                database: config.name,
+                port: config.port,
+                charset: 'utf8mb4_general_ci',
+                multipleStatements: true
+            });
 
-            // Open the database file
-            this.file = new SqliteDb(filePath);
-        }
-
-        return this.file;
+            this.connection.connect(err => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
     }
 
+    /**
+     * Returns the connection instance for the database.
+     */
+    public static getConnection() {
+        return this.connection;
+    }
+
+    /**
+     * Returns the current version of the database schema. This will return `undefined` if the database is unavailable
+     * or if the database has not yet been set up.
+     */
+    public static getSchemaVersion() : Promise<string | undefined> {
+        return new Promise(async resolve => {
+            try {
+                let rows = await this.query(`SELECT * FROM meta WHERE name = 'schema_version';`);
+
+                if (rows.length !== 1) return resolve(undefined);
+                return resolve(rows[0].value);
+            }
+            catch (err) {
+                resolve(undefined);
+            }
+        });
+    }
+}
+
+export type Transaction = {
+    /**
+     * For `INSERT`, `UPDATE`, or `DELETE` statements.
+     * The number of rows that the query affected (includes rows which were not modified).
+     */
+    affected: number;
+
+    /**
+     * For `INSERT`, `UPDATE`, or `DELETE` statements.
+     * The number of rows that the query modified.
+     */
+    changed: number;
+
+    /**
+     * For `INSERT` statements with an auto-increment primary key.
+     * The primary key value of the inserted row.
+     */
+    insertId: number;
 }
