@@ -74,7 +74,7 @@ export class Forecast extends Command {
 
             // Get icon and color for the embed
             let forecast = this.build(parsed);
-            forecast.unshift(today);
+            //forecast.unshift(today);
 
             // Determine the color
             let color = colors[today.icon.replace(/[dn]/, '')];
