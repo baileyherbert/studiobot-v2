@@ -56,7 +56,7 @@ export class Poll extends Command {
             return;
         }
 
-        let poll = new UserPoll(input.channel as TextChannel, title, prompt, options, 3);
+        let poll = new UserPoll(input.channel as TextChannel, title, prompt, options, 6);
         await poll.createPoll();
     }
 }
