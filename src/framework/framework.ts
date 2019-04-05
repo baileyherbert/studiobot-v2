@@ -493,7 +493,7 @@ export class Framework {
 
             // Skip bots and non-commands
             if (!message.content.startsWith(guild.settings.prefix)) return;
-            if (member.user.bot) return;
+            //if (member.user.bot) return;
 
             // Load member settings
             if (!member.settings) {
