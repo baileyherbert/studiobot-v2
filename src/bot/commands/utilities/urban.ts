@@ -24,8 +24,6 @@ export class UrbanDictionary extends Command {
         let query = input.getArgument('query') as string;
         let encoded = encodeURI(query);
 
-        let loader = await input.channel.send(`${Emoji.LOADING}  Fetching definition...`) as Message;
-
         request(`http://api.urbandictionary.com/v0/define?term=${encoded}`, async (err, response, body) => {
             let parsed = JSON.parse(body);
             let items = parsed.list;
@@ -33,38 +31,30 @@ export class UrbanDictionary extends Command {
             if (items.length > 0) {
                 let first = items[0];
                 let definition = first.definition.replace(/\[([\w\s\d\.\-\']+)\]/g, '$1') as string;
-                let example = first.example;
-                let rating = Math.floor(0.5 + (100 * (first.thumbs_up / (first.thumbs_up + first.thumbs_down))));
-                let fields = [];
 
-                if (/[a-zA-Z0-9]$/.test(definition)) {
-                    definition += '.';
-                }
+                // Ensure the definition ends with a period
+                if (/[a-zA-Z0-9]$/.test(definition)) definition += '.';
 
-                if (example) {
-                    fields.push({
-                        name: '**Example**',
-                        value: example.replace(/\[([\w\d\s\.\-\']+)\]/g, '$1')
-                    });
-                }
+                // Ensure the definition does not exceed 2048 characters
+                definition = _.truncate(definition.capitalize(), {
+                    length: 2048,
+                    omission: ' ...',
+                    separator: ' '
+                });
 
-                if (loader.deletable) {
-                    await loader.delete();
-                }
-
+                // Send embed
                 await input.channel.send(new RichEmbed({
-                    title: `Definition of ${query.capitalize()}`,
+                    title: `${query.capitalize()}`,
+                    author: {
+                        icon_url: 'https://firebounty.com/image/635-urban-dictionary',
+                        name: 'Urban Dictionary'
+                    },
                     description: definition.capitalize(),
                     url: `https://www.urbandictionary.com/define.php?term=${encoded}`,
-                    color: 0x4f545c,
-                    fields
+                    color: 0xf25a2c
                 }));
             }
             else {
-                if (loader.deletable) {
-                    await loader.delete();
-                }
-
                 await input.channel.send(`${Emoji.ERROR}  No definitions found.`);
             }
         });
