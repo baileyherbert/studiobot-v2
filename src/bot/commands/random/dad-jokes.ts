@@ -17,16 +17,12 @@ export class DadJokes extends Command {
     }
 
     async execute(input: Input) {
-        
         let url = `https://icanhazdadjoke.com/`;
 
-        console.log(url);
-
-        let message = await input.channel.send(`${Emoji.LOADING}  Fetching image...`) as Message;
+        let message = await input.channel.send(`${Emoji.LOADING}  Fetching joke...`) as Message;
         let headers = {
             'Accept': 'application/json',
             'User-Agent': 'Ember bot'
-            //'X-API-KEY': apiKey,
         }
 
         //Fetch from API
@@ -34,15 +30,12 @@ export class DadJokes extends Command {
             // Handle HTTP errors
             if (err) {
                 this.getLogger().error(err);
-                await message.edit(`${Emoji.ERROR}  Failed to get image, try again later.`);
+                await message.edit(`${Emoji.ERROR}  Failed to get dad joke, try again later.`);
                 return;
             }
 
             // Parse the body
             let parsed = (<ApiResponse>JSON.parse(body));
-
-            console.log(parsed.joke);
-            console.log(parsed.id);
 
             // Delete the message if it can be deleted
             message.deleteAfter(0);
@@ -51,7 +44,7 @@ export class DadJokes extends Command {
             await input.channel.send({
                 embed: {
                     color: 3447003,
-                    title: `**Dad Joke**` ,
+                    title: `Dad Joke` ,
                     description: parsed.joke
                 }
             });
@@ -63,5 +56,5 @@ type ApiResponse = {
     id: string;
     joke: string;
     status: number;
-    
+
 };
