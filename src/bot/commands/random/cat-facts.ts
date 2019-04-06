@@ -14,11 +14,8 @@ export class CatFacts extends Command {
     }
 
     async execute(input: Input) {
-        
         let url = 'https://catfact.ninja/fact?max_length=2000';
-
-        console.log(url);
-        let message = await input.channel.send(`${Emoji.LOADING}  Fetching image...`) as Message;
+        let message = await input.channel.send(`${Emoji.LOADING}  Fetching fact...`) as Message;
 
         //Fetch from API
         request(url, async (err, response, body) => {
@@ -28,22 +25,18 @@ export class CatFacts extends Command {
                 return;
             }
 
-            console.log(body);
-
             //Parse the body
             let parsed = (<ApiResponse>JSON.parse(body));
 
-            console.log(parsed.fact);
-
             // Delete the loading message
-            try { await message.delete(); } catch(err) {}
+            message.deleteAfter(0);
 
-            input.channel.send({
+            await input.channel.send({
                 embed: {
                     color: 3447003,
-                    title: 'Cat Facts',
+                    title: 'Cat Fact',
                     description: parsed.fact
-            }
+                }
             });
         });
     }
