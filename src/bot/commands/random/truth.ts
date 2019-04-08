@@ -1,6 +1,6 @@
 import {Command, Input} from '@api';
 
-const truth = readPublicFile('random/Truth.txt').split(/\r?\n\r?\n/);
+const truth = readPublicFile('random/Truth.txt').split(/\r?\n/);
 
 export class truthClass extends Command {
     constructor(){
