@@ -96,9 +96,6 @@ export class Database {
             try {
                 let rows = await this.query(`SELECT * FROM meta WHERE name = 'schema_version';`);
 
-                // test:
-                this.getMigrationFiles();
-
                 if (rows.length !== 1) return resolve(undefined);
                 return resolve(rows[0].value);
             }
@@ -111,35 +108,47 @@ export class Database {
     /**
      * Returns an array of migration files to run.
      */
-    public static getMigrationFiles(currentVersion ?: string) : string[] {
+    public static getMigrationFiles(currentVersion ?: string) : MigrationFile[] {
         let migrationsPath = pub('migrations');
-        let fileNames2 = fs.readdirSync(migrationsPath).filter(name => !name.equals('init.sql'));
-        let fileNames = ['1.0', '1.0.1', '1.0.2', '1.1.0', '1.1.3', '2.0.0', '2.3.1', '0.0.1'];
+        let currentVersionInt = (currentVersion) ? this.getVersionInt(currentVersion) : 0;
 
-        console.log(fileNames.sort((a, b) => {
-            let aParts = a.split('.');
-            let bParts = b.split('.');
+        let fileNames = fs.readdirSync(migrationsPath).filter(name => !name.equals('init.sql')).sort((a, b) => {
+            let aParts = a.replace('.sql', '').split('.');
+            let bParts = b.replace('.sql', '').split('.');
 
             while (aParts.length < 3) aParts.push('0');
             while (bParts.length < 3) bParts.push('0');
 
-            let aMajor = parseInt(a[0]);
-            let aMinor = parseInt(a[1]);
-            let aPatch = parseInt(a[2]);
+            let aId = (1000000 * parseInt(aParts[0])) + (1000 * parseInt(aParts[1])) + parseInt(aParts[2]);
+            let bId = (1000000 * parseInt(bParts[0])) + (1000 * parseInt(bParts[1])) + parseInt(bParts[2]);
 
-            let bMajor = parseInt(b[0]);
-            let bMinor = parseInt(b[1]);
-            let bPatch = parseInt(b[2]);
+            return aId - bId;
+        });
 
-            if (aMajor > bMajor) return 1;
-            if (bMajor > aMajor) return 0;
+        let files : MigrationFile[] = [];
+        fileNames.forEach(name => {
+            if (this.getVersionInt(name) > currentVersionInt) {
+                files.push({
+                    version: name.replace('.sql', ''),
+                    path: path.join(migrationsPath, name)
+                });
+            }
+        });
 
+        return files;
+    }
 
-            return 0;
-        }));
+    /**
+     * Returns an integer representation of a version string.
+     */
+    private static getVersionInt(version: string) {
+        let parts = version.replace('.sql', '').split('.');
 
-        process.exit();
-        return [];
+        // Right padding
+        while (parts.length < 3) parts.push('0');
+
+        // Create an integer out of the version
+        return (1000000 * parseInt(parts[0])) + (1000 * parseInt(parts[1])) + parseInt(parts[2]);
     }
 }
 
@@ -162,3 +171,8 @@ export type Transaction = {
      */
     insertId: number;
 }
+
+export type MigrationFile = {
+    version: string;
+    path: string;
+};
