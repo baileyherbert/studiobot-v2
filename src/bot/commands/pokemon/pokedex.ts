@@ -8,6 +8,7 @@ export class Pokedex extends Command {
     constructor() {
         super({
             name: 'pokedex',
+            aliases: ['dex', 'pokdex'],
             description: 'Find information about any pokemon!',
             arguments: [
                 {
@@ -21,7 +22,7 @@ export class Pokedex extends Command {
         let pokemon = input.getArgument('pokemon') as string;
         let url = 'https://pokeapi.co/api/v2/pokemon/';
 
-        let requestURL = request((url + pokemon), async (error, response, body) => {
+        let requestURL = request((url + pokemon.toLowerCase()), async (error, response, body) => {
             if (error) {
                 return input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve data for that pokemon.`);
             }
@@ -68,7 +69,7 @@ export class Pokedex extends Command {
                             value: ((parsed.height*.1).toFixed(2)).toString() + ' Meters'
                         },
                         {
-                            name: 'Weight',
+                            name: 'Weight:',
                             value: ((parsed.weight*.1).toFixed(2)).toString() + ' Kilograms'
                         }
                     ]
