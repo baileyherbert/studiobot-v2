@@ -1,4 +1,6 @@
 import * as mysql from 'mysql';
+import * as path from 'path';
+import * as fs from 'fs';
 import { Framework } from '@core/framework';
 
 const queue = require('queue')({ concurrency: 1, autostart: true, timeout: 60000 });
@@ -94,6 +96,9 @@ export class Database {
             try {
                 let rows = await this.query(`SELECT * FROM meta WHERE name = 'schema_version';`);
 
+                // test:
+                this.getMigrationFiles();
+
                 if (rows.length !== 1) return resolve(undefined);
                 return resolve(rows[0].value);
             }
@@ -101,6 +106,40 @@ export class Database {
                 resolve(undefined);
             }
         });
+    }
+
+    /**
+     * Returns an array of migration files to run.
+     */
+    public static getMigrationFiles(currentVersion ?: string) : string[] {
+        let migrationsPath = pub('migrations');
+        let fileNames2 = fs.readdirSync(migrationsPath).filter(name => !name.equals('init.sql'));
+        let fileNames = ['1.0', '1.0.1', '1.0.2', '1.1.0', '1.1.3', '2.0.0', '2.3.1', '0.0.1'];
+
+        console.log(fileNames.sort((a, b) => {
+            let aParts = a.split('.');
+            let bParts = b.split('.');
+
+            while (aParts.length < 3) aParts.push('0');
+            while (bParts.length < 3) bParts.push('0');
+
+            let aMajor = parseInt(a[0]);
+            let aMinor = parseInt(a[1]);
+            let aPatch = parseInt(a[2]);
+
+            let bMajor = parseInt(b[0]);
+            let bMinor = parseInt(b[1]);
+            let bPatch = parseInt(b[2]);
+
+            if (aMajor > bMajor) return 1;
+            if (bMajor > aMajor) return 0;
+
+
+            return 0;
+        }));
+
+        process.exit();
+        return [];
     }
 }
 
