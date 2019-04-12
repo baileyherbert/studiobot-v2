@@ -13,7 +13,7 @@ export class LastFm extends Command {
             arguments: [
                 {
                     name: 'action',
-                    options: ['set', 'get', 'remove', 'album', 'artist', 'chart', 'artistchart', 'trackchart'],
+                    options: ['set', 'get', 'remove', 'album', 'artist', 'chart', 'albumchart', 'artistchart'],
                     default: 'get'
                 },
                 {
@@ -36,9 +36,7 @@ export class LastFm extends Command {
         let queryString = user + '&api_key= ' + key + '&limit=2&format=json';
 
         let nullText = '[undefined]';
-        let nullURL = 'https://discordapp.com/assets/ea3b7f0aee3f51c3bbfe5a6d7f93e436.svg'
-
-        // test
+        let nullURL = 'https://upload.wikimedia.org/wikipedia/commons/4/48/BLANK_ICON.png'
 
         switch(action) {
             case 'get':
@@ -110,10 +108,12 @@ export class LastFm extends Command {
                             }
                         });
                     });
+                } else {
+                    input.channel.send('Please connect your lastfm account using `lastfm set <username>`');
                 }
                 break;
             case 'set':
-                if (user && user != '') {
+                if (input.getArgument('user')) {
                     db.lastfmId = user;
                     input.channel.send('Lastfm username set to ' + user);
                 } else {
@@ -154,7 +154,7 @@ export class LastFm extends Command {
 
                     });
                 } else {
-                    input.channel.send(`Please input an album name.`);
+                    input.channel.send('Please input an album name. `lastfm album "<Album Name>"`');
                 }
                 break;
             case 'artist':
@@ -218,10 +218,11 @@ export class LastFm extends Command {
 
                     });
                 } else {
-                    input.channel.send(`Please input an artist name.`);
+                    input.channel.send('Please input an artist name. `lastfm artist "<Artist Name>"`');
                 }
                 break;
             case 'chart':
+            case 'albumchart':
                 if (user && user != '') {
                     let currentTime = (Math.floor(new Date().getTime()/1000.0));
                     let from = currentTime-315569260;
@@ -286,78 +287,81 @@ export class LastFm extends Command {
                             files: [await image.getBufferAsync(Jimp.MIME_PNG)]
                         });
                     });
-                } 
+                }  else {
+                    input.channel.send('Please connect your lastfm account using `lastfm set <username>`');
+                }
                 break;
             case 'artistchart':
-            if (user && user != '') {
-                let currentTime = (Math.floor(new Date().getTime()/1000.0));
-                let from = currentTime-315569260;
-                if (input.getArgument('user')) {
-                    switch(user) {
-                        case 'week':
-                        case 'weekly':
-                            from = currentTime-604800;
-                            break;
-                        case 'month':
-                        case 'monthly':
-                            from = currentTime-2629743;
-                            break;
-                        case 'year':
-                        case 'yearly':
-                            from = currentTime-31556926;
-                            break;
-                        case 'all':
-                        case 'alltime':
-                            from = currentTime-315569260;
-                            break;
-                        default:
-                            from = currentTime-315569260;
-                    }
-                }
-
-                let requestURL = request((lastfmURL + 'user.getWeeklyArtistChart' + '&user=' + db.lastfmId + '&from=' + from.toString() + '&to=' + currentTime.toString() + '&api_key= ' + key + '&format=json'), async (error: any, response: Response, body: any) => {
-                    if (error) {
-                        input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
-                        return;
-                    }
-
-                    let parsed = JSON.parse(body);
-
-                    if (parsed.weeklyartistchart == undefined) {
-                        input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
-                        return;
-                    }
-
-                    let image : Jimp = await Jimp.read(pub('images/blankchart.png')) as Jimp;
-
-                    let count = 0;
-                    for (let i = 0; i < 3; i++) {
-                        for (let j = 0; j < 3; j++) {
-                            if (parsed.weeklyartistchart.artist[count].mbid != '') {
-                                let artistImage : Jimp = await Jimp.read(await this.getArtistImage(parsed.weeklyartistchart.artist[count].name, key)) as Jimp;
-                                image.composite(artistImage, 300*i, 300*j);
-                                await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK).then(font => {
-                                    image.print(font, 300*i+2, 300*j+2, parsed.weeklyartistchart.artist[count].name);
-                                });
-                                await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE).then(font => {
-                                    image.print(font, 300*i, 300*j, parsed.weeklyartistchart.artist[count].name);
-                                });
-                            } else {
-                                j -= 1;
-                            }
-                            count++;
+                if (user && user != '') {
+                    let currentTime = (Math.floor(new Date().getTime()/1000.0));
+                    let from = currentTime-315569260;
+                    if (input.getArgument('user')) {
+                        switch(user) {
+                            case 'week':
+                            case 'weekly':
+                                from = currentTime-604800;
+                                break;
+                            case 'month':
+                            case 'monthly':
+                                from = currentTime-2629743;
+                                break;
+                            case 'year':
+                            case 'yearly':
+                                from = currentTime-31556926;
+                                break;
+                            case 'all':
+                            case 'alltime':
+                                from = currentTime-315569260;
+                                break;
+                            default:
+                                from = currentTime-315569260;
                         }
                     }
 
-                    input.channel.send({
-                        files: [await image.getBufferAsync(Jimp.MIME_PNG)]
+                    let requestURL = request((lastfmURL + 'user.getWeeklyArtistChart' + '&user=' + db.lastfmId + '&from=' + from.toString() + '&to=' + currentTime.toString() + '&api_key= ' + key + '&format=json'), async (error: any, response: Response, body: any) => {
+                        if (error) {
+                            input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
+                            return;
+                        }
+
+                        let parsed = JSON.parse(body);
+
+                        if (parsed.weeklyartistchart == undefined) {
+                            input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
+                            return;
+                        }
+
+                        let image : Jimp = await Jimp.read(pub('images/blankchart.png')) as Jimp;
+
+                        let count = 0;
+                        for (let i = 0; i < 3; i++) {
+                            for (let j = 0; j < 3; j++) {
+                                if (parsed.weeklyartistchart.artist[count].mbid != '') {
+                                    let artistImage : Jimp = await Jimp.read(await this.getArtistImage(parsed.weeklyartistchart.artist[count].name, key)) as Jimp;
+                                    image.composite(artistImage, 300*i, 300*j);
+                                    await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK).then(font => {
+                                        image.print(font, 300*i+2, 300*j+2, parsed.weeklyartistchart.artist[count].name);
+                                    });
+                                    await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE).then(font => {
+                                        image.print(font, 300*i, 300*j, parsed.weeklyartistchart.artist[count].name);
+                                    });
+                                } else {
+                                    j -= 1;
+                                }
+                                count++;
+                            }
+                        }
+
+                        input.channel.send({
+                            files: [await image.getBufferAsync(Jimp.MIME_PNG)]
+                        });
                     });
-                });
-            } 
+                }  else {
+                    input.channel.send('Please connect your lastfm account using `lastfm set <username>`');
+                }
                 break;
-            case 'trackchart':
-                
-                break;
+            default:
+                input.channel.send('Please connect your lastfm account using `lastfm set <username>`');
         }
 
         await db.save();
