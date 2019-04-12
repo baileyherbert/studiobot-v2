@@ -152,6 +152,8 @@ export class LastFm extends Command {
                         })
 
                     });
+                } else {
+                    input.channel.send(`Please input an album name.`);
                 }
                 break;
             case 'artist':
@@ -212,12 +214,38 @@ export class LastFm extends Command {
                         })
 
                     });
+                } else {
+                    input.channel.send(`Please input an artist name.`);
                 }
                 break;
             case 'chart':
                 if (user && user != '') {
-                    let time = new Date().getTime()
-                    let requestURL = request((lastfmURL + 'user.getWeeklyAlbumChart' + '&user=' + user + '&from=946688400&to=1552697146' + '&api_key= ' + key + '&limit=2&format=json'), async (error: any, response: Response, body: any) => {
+                    let currentTime = (Math.floor(new Date().getTime()/1000.0));
+                    let from = currentTime-315569260;
+                    if (input.getArgument('user')) {
+                        switch(user) {
+                            case 'week':
+                            case 'weekly':
+                                from = currentTime-604800;
+                                break;
+                            case 'month':
+                            case 'monthly':
+                                from = currentTime-2629743;
+                                break;
+                            case 'year':
+                            case 'yearly':
+                                from = currentTime-31556926;
+                                break;
+                            case 'all':
+                            case 'alltime':
+                                from = currentTime-315569260;
+                                break;
+                            default:
+                                from = currentTime-315569260;
+                        }
+                    }
+
+                    let requestURL = request((lastfmURL + 'user.getWeeklyAlbumChart' + '&user=' + db.lastfmId + '&from=' + from.toString() + '&to=' + currentTime.toString() + '&api_key= ' + key + '&format=json'), async (error: any, response: Response, body: any) => {
                         if (error) {
                             input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
                         }
@@ -235,7 +263,7 @@ export class LastFm extends Command {
                         for (let i = 0; i < 3; i++) {
                             for (let j = 0; j < 3; j++) {
                                 if (parsed.weeklyalbumchart.album[count].mbid != '') {
-                                    console.log(count);
+                                    //console.log(count);
                                     let cover : Jimp = await Jimp.read(await this.getAlbumImage(parsed.weeklyalbumchart.album[count].name, parsed.weeklyalbumchart.album[count].artist['#text'], key)) as Jimp;
                                     image.composite(cover, 300*i, 300*j);
                                 } else {
@@ -249,7 +277,7 @@ export class LastFm extends Command {
                             files: [await image.getBufferAsync(Jimp.MIME_PNG)]
                         });
                     });
-                }
+                } 
                 break;
             case 'artistchart':
                 break;
@@ -274,7 +302,7 @@ export class LastFm extends Command {
                     return;
                 } 
                 
-                console.log(name);
+                //console.log(name);
                 let url = '';
                 let result = 0;
                 while (true) {
