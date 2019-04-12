@@ -529,5 +529,8 @@ type BotConfiguration = {
         openWeatherMap: {
             key: string;
         };
+        lastfm: {
+            key: string;
+        };
     }
 };

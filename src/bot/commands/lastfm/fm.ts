@@ -3,6 +3,7 @@ import { Emoji } from '@bot/libraries/emoji';
 import * as request from 'request';
 import { Response } from 'request';
 import * as Jimp from 'jimp';
+import { Framework } from '@core/framework';
 
 export class LastFm extends Command {
 
@@ -31,7 +32,8 @@ export class LastFm extends Command {
         let user = input.getArgument('user') as string | undefined;
         if (!user) { user = db.lastfmId; }
 
-        let key = '87aa68ded7b81dc193520b678aff7da6';
+        let key = Framework.getConfig().authentication.lastfm.key;
+        
         let lastfmURL = 'http://ws.audioscrobbler.com/2.0/?method=';
         let queryString = user + '&api_key= ' + key + '&limit=2&format=json';
 
