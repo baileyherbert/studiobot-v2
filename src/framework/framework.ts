@@ -235,7 +235,7 @@ export class Framework {
         }
 
         // Run migrations
-        let migrationFiles = Database.getMigrationFiles();
+        let migrationFiles = Database.getMigrationFiles(version);
         for (let i = 0; i < migrationFiles.length; i++) {
             let file = migrationFiles[i];
             this.logger.info(`Migrating database to v${file.version}...`);
