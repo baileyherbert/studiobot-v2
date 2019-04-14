@@ -153,6 +153,10 @@ export class Akinator extends Command {
                         let name = firstGuess.name;
                         let description = firstGuess.description;
 
+
+                        //console.log(photo);
+                        //console.log(description);
+
                         await input.channel.send({
                             embed: {
                                 color: 0x499df5,
@@ -182,6 +186,7 @@ export class Akinator extends Command {
                     //delete the previous message 
                     message.deleteAfter(600000);
                     
+                    //
                     //Display the next message;
                     // message = await input.channel.send({
                     //     embed: {
