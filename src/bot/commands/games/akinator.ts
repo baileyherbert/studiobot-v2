@@ -1,7 +1,6 @@
-import { Command, Input, Listener } from '@api';
-import { Emoji } from '@libraries/emoji';
+import { Command, Input } from '@api';
 import { Message } from 'discord.js';
-import { Akinator, Region } from '@libraries/akinator';
+import { Akinator } from '@libraries/akinator';
 
 let images: string[] = [
     'https://en.akinator.com/bundles/elokencesite/images/akitudes_670x1096/defi.png?v90',
@@ -121,10 +120,3 @@ export class AkinatorGame extends Command {
         });
     }
 }
-
-type Resolve = {
-    session: string;
-    signature: string;
-    question: string;
-    answers: string[];
-};
