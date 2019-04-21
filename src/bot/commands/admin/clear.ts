@@ -11,6 +11,8 @@ const remarks = [
 ];
 
 export class Clear extends Command {
+    private sessions: {[guildId: string]: boolean} = {};
+
     constructor() {
         super({
             name: 'clear',
@@ -40,6 +42,11 @@ export class Clear extends Command {
     }
 
     async execute(input: Input) {
+        // Reserve
+        if (input.channel.id in this.sessions) return;
+        this.sessions[input.channel.id] = true;
+
+        // Get arguments
         let amount = input.getArgument('amount') as string;
         let limit = amount.equalsIgnoreCase('all') ? null : parseInt(amount);
         let force = (input.getArgument('force') as string | undefined) != undefined;
@@ -58,6 +65,7 @@ export class Clear extends Command {
             }
             catch (error) {}
 
+            delete this.sessions[input.channel.id];
             return;
         }
 
@@ -70,7 +78,7 @@ export class Clear extends Command {
         }
 
         // Function for defining progress
-        let updateProgress = async function() {
+        let updateProgress = async () => {
             let percent = Math.floor(100 * (deletedTotal / originalSize));
             let status = `${Emoji.LOADING}  Clearing ${originalSize - deletedTotal} messages (${percent}%)...`;
 
@@ -81,6 +89,7 @@ export class Clear extends Command {
                 message = await input.channel.send(status) as Message;
             }
 
+            delete this.sessions[input.channel.id];
             return;
         }
 
@@ -118,6 +127,7 @@ export class Clear extends Command {
                                 message = await input.channel.send(`${Emoji.ERROR}  Unable to delete messages.`) as Message;
                             }
 
+                            delete this.sessions[input.channel.id];
                             message.deleteAfter(5000);
                             return;
                         }
@@ -148,6 +158,7 @@ export class Clear extends Command {
 
         message.deleteAfter(5000);
         input.message.deleteAfter(5000);
+        delete this.sessions[input.channel.id];
     }
 
     /**
