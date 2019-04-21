@@ -1,6 +1,6 @@
 import {Command, Input} from '@api';
 
-const dare = readPublicFile('random/Dare.txt').split(/\r?\n\r?\n/);
+const dare = readPublicFile('random/Dare.txt').split(/\r?\n/);
 
 export class dareClass extends Command {
     constructor(){
