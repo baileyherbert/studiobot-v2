@@ -1,31 +1,7 @@
 import { Command, Input, Listener } from '@api';
-import { Emoji } from '@bot/libraries/emoji';
+import { Emoji } from '@libraries/emoji';
 import { Message } from 'discord.js';
-import { Reactions } from '@bot/libraries/reactions';
-import { Timer } from '@bot/libraries/utilities/timer';
-import { Framework } from '@core/framework';
-import { progressBarText } from '@bot/libraries/utilities/progress-bar';
-const aki = require('aki-api');
-const entities = require("html-entities").AllHtmlEntities;
-
-let regions: string[] = [
-    'en',
-    'en2',
-    'ar',
-    'cn',
-    'de',
-    'es',
-    'fr',
-    'il',
-    'it',
-    'jp',
-    'kr',
-    'nl',
-    'pl',
-    'pt',
-    'ru',
-    'tr'
-];
+import { Akinator, Region } from '@libraries/akinator';
 
 let images: string[] = [
     'https://en.akinator.com/bundles/elokencesite/images/akitudes_670x1096/defi.png?v90',
@@ -39,132 +15,92 @@ let images: string[] = [
     'https://en.akinator.com/bundles/elokencesite/images/akitudes_670x1096/surprise.png',
 ]
 
-let reactions = ['🇾', '🇳', '🇩', '❔', '❓', '↩'];
-
-export class Akinator extends Command {
+export class AkinatorGame extends Command {
     constructor() {
         super({
             name: 'akinator',
             description: 'Starts the akinator game.',
-            aliases: ['aki'],
-            arguments: [
-                {
-                    name: 'language',
-                    description: 'Select your preferred language',
-                    options: regions,
-                    error: true,
-                    default: regions[0]
-                }
-            ]
+            aliases: ['aki']
         });
     }
 
     async execute(input: Input) {
-        let region = input.getArgument('language') as string;
-        let stepNumber = 0;
+        let akinator = new Akinator('en');
 
-        // Fetch from API
-        aki.start(region, async (resolve: Resolve, error: any) => {
-            // Handle HTTP errors
-            if (error) {
-                this.getLogger().error(`Failed to start akinator: ${error}`);
-                await input.channel.send(`${Emoji.ERROR}  Failed to get response, try again later.`);
-                return;
+        // Start the session
+        let step = await akinator.start();
+        this.getLogger().debug(`Started akinator game with session ${step.session.sessionId} and signature ${step.session.sessionSignature}.`);
+
+        // Send the initial message
+        let message = await input.channel.send({
+            embed: {
+                color: 0x499df5,
+                thumbnail: { url: _.sample(images) },
+                fields: [{
+                    name: `${input.member.displayName}, Question ${step.number}`,
+                    value: `**${step.question}**\nyes (**y**) / no (**n**) / idk (**i**) / probably (**p**) / probably not (**pn**)\nback (**b**)`,
+                }]
+            }
+        }) as Message;
+
+        // Main game loop
+        while (true) {
+            let reaction = await this.getResponse(input);
+
+            // Go back to the previous step
+            if (reaction == 5) {
+                if (step.number == 1) break;
+                step = await akinator.previous();
             }
 
-            // Log session information
-            this.getLogger().debug(`Started akinator game with session ${resolve.session} and signature ${resolve.signature}.`);
+            // Or continue to the next step
+            else {
+                step = await akinator.next(reaction);
+            }
 
-            // Send the initial message
-            let message = await input.channel.send({
+            // If we are 85%+ certain on who the character is, display it
+            if (step.certainty >= 85) {
+                message.deleteAfter(10000);
+
+                // Get the winner
+                const win = await akinator.finish();
+                let photo = win.photo_url;
+                let name = win.name;
+                let description = win.description;
+
+                // Display the winner
+                await input.channel.send({
+                    embed: {
+                        color: 0x499df5,
+                        image: { url: photo },
+                        fields: [
+                            {
+                                "name": `${input.member.displayName}, is this your character?`,
+                                "value": `Name: **${name}**\nFrom: **${description}**`
+                            }
+                        ]
+                    }
+                }) as Message;
+
+                // Exit the loop
+                break;
+            }
+
+            // Delete the previous message
+            message.deleteAfter(600000);
+
+            // Send a new message for the current question
+            message = await input.channel.send({
                 embed: {
                     color: 0x499df5,
                     thumbnail: { url: _.sample(images) },
                     fields: [{
-                        name: `${input.member.displayName}, Question ${stepNumber + 1}`,
-                        value: `**${resolve.question}**\nyes (**y**) / no (**n**) / idk (**i**) / probably (**p**) / probably not (**pn**)\nback (**b**)`,
+                        name: `${input.member.displayName}, Question ${step.number}`,
+                        value: `**${step.question}**\nyes (**y**) / no (**n**) / idk (**i**) / probably (**p**) / probably not (**pn**)\nback (**b**)`,
                     }]
                 }
             }) as Message;
-
-            // Main loop
-            while (true) {
-                let reaction = await this.getResponse(input);
-                let data : any;
-
-                if (reaction == 5) {
-                    // Go back
-                    if (stepNumber == 0) {
-                        break;
-                    }
-
-                    data = await aki.back(region, resolve.session, resolve.signature, reaction, stepNumber);
-                }
-                else {
-                    // Next step
-                    try {
-                        data = await aki.step(region, resolve.session, resolve.signature, reaction, stepNumber);
-                    }
-                    catch (error) {
-                        this.getLogger().error(`Error when stepping akinator: ${error}`);
-                        return;
-                    }
-                }
-
-                // If we are 85%+ certain on who the character is, display it
-                if (data.progress >= 85) {
-                    try {
-                        message.deleteAfter(10000);
-
-                        const win = await aki.win(region, resolve.session, resolve.signature, stepNumber + 1);
-                        const firstGuess = win.answers[0];
-
-                        let photo = firstGuess.absolute_picture_path;
-                        let name = firstGuess.name;
-                        let description = firstGuess.description;
-
-                        //console.log(photo);
-                        //console.log(description);
-
-                        await input.channel.send({
-                            embed: {
-                                color: 0x499df5,
-                                image: { url: photo },
-                                fields: [
-                                    {
-                                      "name": `${input.member.displayName}, is this your character?`,
-                                      "value": `Name: **${name}**\nFrom: **${description}**`
-                                    }
-                                ]
-                            }
-                        }) as Message;
-                    }
-                    catch (error) {
-                        this.getLogger().error(`Error when finalizing akinator win: ${error}`);
-                        return;
-                    }
-
-                    break;
-                }
-
-                // Set next step number
-                stepNumber = data.nextStep;
-
-                // Delete the previous message
-                message.deleteAfter(600000);
-
-                message = await input.channel.send({
-                    embed: {
-                        color: 0x499df5,
-                        thumbnail: { url: _.sample(images) },
-                        fields: [{
-                            name: `${input.member.displayName}, Question ${stepNumber + 1}`,
-                            value: `**${data.nextQuestion}**\nyes (**y**) / no (**n**) / idk (**i**) / probably (**p**) / probably not (**pn**)\nback (**b**)`,
-                        }]
-                    }
-                }) as Message;
-            }
-        });
+        }
     }
 
     private getResponse(input: Input) : Promise<number> {
