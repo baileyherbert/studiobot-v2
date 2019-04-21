@@ -52,18 +52,36 @@ export class Clear extends Command {
 
         // Handle cases where all of the messages are older than two weeks
         if (messagesToDelete.length == 0) {
-            await message.edit(`${Emoji.ERROR}  No messages left to delete.`);
-            message.deleteAfter(5000);
+            try {
+                await message.edit(`${Emoji.ERROR}  No messages left to delete.`);
+                message.deleteAfter(5000);
+            }
+            catch (error) {}
+
             return;
         }
 
         // Add a fancy loading emoticon
-        await message.edit(`${Emoji.LOADING}  Clearing ${messagesToDelete.length} messages (0%)...`);
+        try {
+            await message.edit(`${Emoji.LOADING}  Clearing ${messagesToDelete.length} messages (0%)...`);
+        }
+        catch (error) {
+            message = await input.channel.send(`${Emoji.LOADING}  Clearing ${messagesToDelete.length} messages (0%)...`) as Message;
+        }
 
         // Function for defining progress
         let updateProgress = async function() {
             let percent = Math.floor(100 * (deletedTotal / originalSize));
-            return await message.edit(`${Emoji.LOADING}  Clearing ${originalSize - deletedTotal} messages (${percent}%)...`);
+            let status = `${Emoji.LOADING}  Clearing ${originalSize - deletedTotal} messages (${percent}%)...`;
+
+            try {
+                await message.edit(status);
+            }
+            catch (error) {
+                message = await input.channel.send(status) as Message;
+            }
+
+            return;
         }
 
         // Delete messages in chunks
@@ -93,13 +111,19 @@ export class Clear extends Command {
                         errorCount++;
 
                         if (errorCount >= 10) {
-                            await message.edit(`${Emoji.ERROR}  Unable to delete messages.`);
+                            try {
+                                await message.edit(`${Emoji.ERROR}  Unable to delete messages.`);
+                            }
+                            catch (error) {
+                                message = await input.channel.send(`${Emoji.ERROR}  Unable to delete messages.`) as Message;
+                            }
+
                             message.deleteAfter(5000);
                             return;
                         }
                     }
 
-                    await sleep(1000);
+                    await sleep(600);
                     deletedTotal++;
 
                     if (++steps == 5) {
@@ -115,7 +139,13 @@ export class Clear extends Command {
             }
         }
 
-        await message.edit(`${Emoji.SUCCESS}  Cleared ${originalSize} messages. ${_.sample(remarks)}`);
+        try {
+            await message.edit(`${Emoji.SUCCESS}  Cleared ${originalSize} messages. ${_.sample(remarks)}`);
+        }
+        catch (error) {
+            message = await input.channel.send(`${Emoji.SUCCESS}  Cleared ${originalSize} messages. ${_.sample(remarks)}`) as Message;
+        }
+
         message.deleteAfter(5000);
         input.message.deleteAfter(5000);
     }
