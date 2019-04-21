@@ -24,7 +24,7 @@ export class Music extends Command {
                         'volume',
                         'queue',
                         'loop',
-                        'autoplaying',
+                        'autoplay',
                         'seek',
                         'lyrics'
                     ]
@@ -70,6 +70,7 @@ export class Music extends Command {
                 await session.search(input, options as string);
                 break;
             case 'stop':
+                await session.terminateConnection();
                 break;
             case 'pause':
                 await session.pause();
@@ -89,7 +90,7 @@ export class Music extends Command {
             case 'loop':
                 await session.loop(options);
                 break;
-            case 'autoplaying':
+            case 'autoplay':
                 await session.autoplay(options);
                 break;
             case 'seek':

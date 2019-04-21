@@ -18,24 +18,36 @@ import { Database } from './lib/database';
 
 import chalk from 'chalk';
 import { Documentation } from '@bot/libraries/documentation';
+import { Filesystem } from './internal/filesystem';
+import { SqliteMigration } from './lib/migrations/SqliteMigration';
+
+import * as Sentry from '@sentry/node';
 
 export class Framework {
     private static config: BotConfiguration;
+    private static interface: readline.Interface;
+
     private static client: Client;
     private static logger: Logger;
-    private static commands: Command[] = [];
     private static server?: Server;
+
+    private static commands: { instance: Command, filePath: string, className: string }[] = [];
+    private static listeners: { instance: Listener, filePath: string, className: string }[] = [];
 
     /**
      * Starts the bot.
      */
-    private static start() {
+    private static async start() {
         this.logger = new Logger();
 
         // Bootstrap
         this.loadConfiguration();
+        this.initErrorHandling();
         this.startServer();
         this.bindGracefulShutdown();
+
+        // Connect to the database
+        await this.startDatabase();
 
         if (!CommandLine.hasFlag('dry')) {
             // Start the client
@@ -59,6 +71,9 @@ export class Framework {
                 this.listen();
 
                 this.logger.info('Bot is online...');
+
+                // Start watching files for changes
+                if (this.getEnvironment() == 'test') Filesystem.watch();
             });
         }
         else {
@@ -126,7 +141,24 @@ export class Framework {
      * Returns the bot's configured environment mode.
      */
     public static getEnvironment() : ('test' | 'production') {
+        if (!this.config) return 'test';
         return this.config.environment;
+    }
+
+    /**
+     * Initializes Sentry as an error handler. This only applies to production.
+     */
+    private static initErrorHandling() {
+        if (this.getEnvironment() == 'test') return;
+        Sentry.init({ dsn: 'https://f4db4df28f50465681c4015b68561e9e@sentry.io/1430072' });
+    }
+
+    /**
+     * Reports an exception.
+     */
+    public static reportException(error: Error) {
+        if (this.getEnvironment() == 'test') return;
+        Sentry.captureException(error);
     }
 
     /**
@@ -154,10 +186,67 @@ export class Framework {
                 environment: 'test',
                 options: { allowCodeExecution: false, loggingLevel: 'normal' },
                 server: { enabled: true, port: 3121 },
-                authentication: { discord: { token: '' }, cleverbot: { key: '' }}
+                authentication: { discord: { token: '' }, cleverbot: { key: '' }, openWeatherMap: { key: '' }},
+                database: { host: 'localhost', port: 3306, name: 'ember', username: 'root', password: '' }
             } as BotConfiguration, null, 4));
 
             return welcome();
+        }
+    }
+
+    /**
+     * Starts the database.
+     */
+    private static async startDatabase() {
+        if (!this.config.database) {
+            let migration = new SqliteMigration();
+            let database = await migration.run();
+        }
+
+        let host = this.config.database.host;
+        let port = this.config.database.port;
+
+        this.logger.verbose(`Connecting to database at ${host}:${port}...`);
+        await Database.connect();
+        this.logger.verbose(`Connected successfully.`);
+
+        // Check to make sure the database is up to date
+        let version = await Database.getSchemaVersion();
+
+        // Run initial setup if version is undefined
+        if (!version) {
+            this.logger.info(`Setting up the database for the first time...`);
+
+            // Run the initial migration queries
+            let queries = readPublicFile('migrations/init.sql');
+            await Database.run(queries);
+
+            // Recheck the version
+            this.logger.info(`Checking the schema version...`);
+            version = await Database.getSchemaVersion();
+
+            if (!version) {
+                this.logger.error('Failed to run the initial migration queries.');
+                process.exit();
+            }
+            else {
+                this.logger.info(`Database migrated to version v${version} successfully.`);
+            }
+        }
+
+        // Run migrations
+        let migrationFiles = Database.getMigrationFiles(version);
+        for (let i = 0; i < migrationFiles.length; i++) {
+            let file = migrationFiles[i];
+            this.logger.info(`Migrating database to v${file.version}...`);
+
+            let queries = fs.readFileSync(file.path).toString();
+            await Database.run(queries);
+        }
+
+        // Update the version if we ran migrations
+        if (migrationFiles.length > 0) {
+            version = await Database.getSchemaVersion();
         }
     }
 
@@ -174,13 +263,13 @@ export class Framework {
      * Binds to CTRL+C on Windows and Linux in order to implement a graceful shutdown.
      */
     private static bindGracefulShutdown() {
-        if (process.platform === 'win32') {
-            let rl = readline.createInterface({
-                input: process.stdin,
-                output: process.stdout
-            });
+        this.interface = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
 
-            rl.on('SIGINT', () => {
+        if (process.platform === 'win32') {
+            this.interface.on('SIGINT', () => {
                 process.emit('SIGINT' as any);
             });
         }
@@ -199,7 +288,11 @@ export class Framework {
             this.logger.verbose('Waiting for client to sign off...');
 
             // Stop the client
-            await this.client.destroy();
+            if (this.client) await this.client.destroy();
+
+            // Stop the database
+            this.logger.verbose('Closing database...');
+            await Database.close();
 
             // Stop the server if it is active
             if (this.server) {
@@ -250,7 +343,7 @@ export class Framework {
                             let instance = new command();
 
                             if (instance instanceof Command) {
-                                this.commands.push(instance);
+                                this.commands.push({ instance, filePath, className });
                             }
                         }
                     }
@@ -258,6 +351,7 @@ export class Framework {
                 catch (error) {
                     this.logger.error(`Encountered an error when loading commands/${fileName}:`);
                     this.logger.error(error);
+                    this.reportException(error);
                 }
             });
         }
@@ -288,6 +382,7 @@ export class Framework {
                             let instance = new listener();
 
                             if (instance instanceof Listener) {
+                                this.listeners.push({ instance, filePath, className });
                                 instance.start();
                             }
                         }
@@ -296,6 +391,7 @@ export class Framework {
                 catch (error) {
                     this.logger.error(`Encountered an error when loading listeners/${fileName}:`);
                     this.logger.error(error);
+                    this.reportException(error);
                 }
             });
         }
@@ -322,6 +418,7 @@ export class Framework {
                 catch (error) {
                     this.logger.error(`Encountered an error when loading scripts/${fileName}:`);
                     this.logger.error(error);
+                    this.reportException(error);
                 }
             });
         }
@@ -360,6 +457,7 @@ export class Framework {
                 catch (error) {
                     this.logger.error(`Encountered an error when loading jobs/${fileName}:`);
                     this.logger.error(error);
+                    this.reportException(error);
                 }
             });
         }
@@ -448,6 +546,8 @@ export class Framework {
                                 returned.catch((error : Error) => {
                                     this.logger.error(`Encountered an error when running ${commandName} command:`);
                                     this.logger.error(error);
+                                    this.reportException(error);
+
                                     input.channel.send(':tools:  Internal error, check console.');
                                 });
                             }
@@ -461,6 +561,7 @@ export class Framework {
                     catch (error) {
                         this.logger.error(`Encountered an error when running ${commandName} command:`);
                         this.logger.error(error);
+                        this.reportException(error);
 
                         if (this.getEnvironment() == 'test') input.channel.send(':tools:  Internal error, check console.');
                         else input.channel.send(':tools:  Sorry, I ran into an error.');
@@ -493,8 +594,8 @@ export class Framework {
         for (let i = 0; i < this.commands.length; i++) {
             let command = this.commands[i];
 
-            if (command.hasAlias(name)) {
-                return command;
+            if (command.instance.hasAlias(name)) {
+                return command.instance;
             }
         }
 
@@ -505,7 +606,94 @@ export class Framework {
      * Returns all running commands in the framework.
      */
     public static getCommands() : Command[] {
-        return this.commands;
+        let commands : Command[] = [];
+
+        this.commands.forEach(entry => {
+            commands.push(entry.instance);
+        });
+
+        return commands;
+    }
+
+    /**
+     * Returns all running listeners in the framework.
+     */
+    public static getListeners() : Listener[] {
+        let listeners : Listener[] = [];
+
+        this.listeners.forEach(entry => {
+            listeners.push(entry.instance);
+        });
+
+        return listeners;
+    }
+
+    /**
+     * Reloads all commands and listeners from the disk. This does not clear cache automatically, so unless you do that,
+     * it will reload the same cached code as before.
+     */
+    public static reload() {
+        this.commands.forEach(command => {
+            this.reloadEntry(command);
+        });
+
+        this.listeners.forEach(listener => {
+            listener.instance.stop();
+            this.reloadEntry(listener);
+        });
+    }
+
+    /**
+     * Reloads a given command or listener entry.
+     */
+    private static reloadEntry(entry: any) {
+        let type = (entry.instance instanceof Command) ?
+            'command' :
+            ((entry.instance instanceof Listener) ? 'listener' : 'other');
+
+        // Warn if the command file no longer exists
+        if (!fs.existsSync(entry.filePath)) {
+            this.getLogger().warning(`Cannot reload ${type} "${entry.className}" because its file was deleted: ${entry.filePath}`);
+            return;
+        }
+
+        try {
+            // Require the new file and get its export
+            let exported = require(entry.filePath);
+            let object = exported[entry.className];
+
+            // Warn if the export has gone missing
+            if (!object) {
+                this.getLogger().warning(`Cannot reload ${type} "${entry.className}" because its file no longer exports that class: ${entry.filePath}`);
+                return;
+            }
+
+            // Stop the existing instance if applicable
+            if (typeof entry.instance.stop === 'function') {
+                entry.instance.stop();
+            }
+
+            // Set the new instance
+            entry.instance = new object();
+
+            // Start the instance if it is a listener
+            if (type == 'listener') {
+                if (typeof entry.instance.start === 'function') {
+                    entry.instance.start();
+                }
+            }
+        }
+        catch (e) {
+            this.getLogger().warning(`Encountered an error when reloading ${type} "${entry.className}"`);
+            this.getLogger().warning(e);
+        }
+    }
+
+    /**
+     * Returns the readline interface for the bot.
+     */
+    public static getInterface() {
+        return this.interface;
     }
 }
 
@@ -518,7 +706,7 @@ type BotConfiguration = {
     server: {
         enabled: boolean;
         port?: number;
-    }
+    };
     authentication: {
         discord: {
             token: string
@@ -526,5 +714,15 @@ type BotConfiguration = {
         cleverbot: {
             key: string
         };
-    }
+        openWeatherMap: {
+            key: string;
+        };
+    };
+    database: {
+        host: string;
+        port: number;
+        name: string;
+        username: string;
+        password: string;
+    };
 };
