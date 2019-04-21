@@ -233,6 +233,21 @@ export class Framework {
                 this.logger.info(`Database migrated to version v${version} successfully.`);
             }
         }
+
+        // Run migrations
+        let migrationFiles = Database.getMigrationFiles(version);
+        for (let i = 0; i < migrationFiles.length; i++) {
+            let file = migrationFiles[i];
+            this.logger.info(`Migrating database to v${file.version}...`);
+
+            let queries = fs.readFileSync(file.path).toString();
+            await Database.run(queries);
+        }
+
+        // Update the version if we ran migrations
+        if (migrationFiles.length > 0) {
+            version = await Database.getSchemaVersion();
+        }
     }
 
     /**

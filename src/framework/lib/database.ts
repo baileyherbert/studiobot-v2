@@ -1,4 +1,6 @@
 import * as mysql from 'mysql';
+import * as path from 'path';
+import * as fs from 'fs';
 import { Framework } from '@core/framework';
 
 const queue = require('queue')({ concurrency: 1, autostart: true, timeout: 60000 });
@@ -102,6 +104,52 @@ export class Database {
             }
         });
     }
+
+    /**
+     * Returns an array of migration files to run.
+     */
+    public static getMigrationFiles(currentVersion ?: string) : MigrationFile[] {
+        let migrationsPath = pub('migrations');
+        let currentVersionInt = (currentVersion) ? this.getVersionInt(currentVersion) : 0;
+
+        let fileNames = fs.readdirSync(migrationsPath).filter(name => !name.equals('init.sql')).sort((a, b) => {
+            let aParts = a.replace('.sql', '').split('.');
+            let bParts = b.replace('.sql', '').split('.');
+
+            while (aParts.length < 3) aParts.push('0');
+            while (bParts.length < 3) bParts.push('0');
+
+            let aId = (1000000 * parseInt(aParts[0])) + (1000 * parseInt(aParts[1])) + parseInt(aParts[2]);
+            let bId = (1000000 * parseInt(bParts[0])) + (1000 * parseInt(bParts[1])) + parseInt(bParts[2]);
+
+            return aId - bId;
+        });
+
+        let files : MigrationFile[] = [];
+        fileNames.forEach(name => {
+            if (this.getVersionInt(name) > currentVersionInt) {
+                files.push({
+                    version: name.replace('.sql', ''),
+                    path: path.join(migrationsPath, name)
+                });
+            }
+        });
+
+        return files;
+    }
+
+    /**
+     * Returns an integer representation of a version string.
+     */
+    private static getVersionInt(version: string) {
+        let parts = version.replace('.sql', '').split('.');
+
+        // Right padding
+        while (parts.length < 3) parts.push('0');
+
+        // Create an integer out of the version
+        return (1000000 * parseInt(parts[0])) + (1000 * parseInt(parts[1])) + parseInt(parts[2]);
+    }
 }
 
 export type Transaction = {
@@ -123,3 +171,8 @@ export type Transaction = {
      */
     insertId: number;
 }
+
+export type MigrationFile = {
+    version: string;
+    path: string;
+};
