@@ -4,13 +4,13 @@ import { Documentation } from '@bot/libraries/documentation';
 import { Util, RichEmbed } from 'discord.js';
 
 export let Sections : HelpSections = {
-    'Basic': [ 'help', 'ping', 'uptime', 'changelog' ],
+    'Basic': [ 'help', 'ping', 'uptime', 'changelog', 'invite' ],
     'Admin': [ 'prefix', 'clear', 'spam' ],
     'Economy': [ 'balance', 'daily', 'pay', 'richest', 'inventory' ],
-    'Games': [ 'breakice', 'madlib', 'tictactoe', 'spin', 'race' ],
-    'Social': [ 'level', 'rank', 'leaderboard', 'mock', 'rip', 'quote' ],
-    'Utilities': [ 'music', 'avatar', 'nicknames', 'fm' ],
-    'Random': [ 'between', 'csv', '8ball', 'poem', 'pun', 'roll', 'trivia', 'user', 'inspire', 'noun', 'verb', 'adjective', 'adverb' ]
+    'Games': [ 'game', 'madlib', 'spin', 'race', 'hangman' ],
+    'Social': [ 'level', 'rank', 'leaderboard', 'mock', 'rip', 'quote', 'breakice' ],
+    'Utilities': [ 'music', 'weather', 'forecast', 'poll', 'avatar', 'nicknames', 'lastfm', 'flip', 'countdown', 'distance', 'color', 'youtube' ],
+    'Random': [ 'between', 'csv', '8ball', 'poem', 'pun', 'roll', 'trivia', 'user', 'inspire', 'noun', 'verb', 'adjective', 'adverb', 'twister', 'coinflip', 'fortune', 'dog', 'cat', 'yomomma', 'joke', 'ascii', 'lenny' ]
 };
 
 export class Help extends Command {
@@ -44,8 +44,16 @@ export class Help extends Command {
 
         _.each(Sections, (commands, title) => {
             let o = '';
+            let sorted = commands.sort((a, b) => {
+                let nameA = a.toLowerCase();
+                let nameB = b.toLowerCase();
 
-            _.each(commands, name => {
+                if (nameA < nameB) return -1;
+                if (nameA > nameB) return 1;
+                return 0;
+            });
+
+            _.each(sorted, name => {
                 o += '`' + name + '`  ';
             });
 

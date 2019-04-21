@@ -129,7 +129,7 @@ export class Argument {
         else if (_.isEqual(this.getConstraints(), ['mention'])) components.push('@' + this.getName());
         else components.push(this.getName());
 
-        if (this.getDefaultValue() != undefined) {
+        if (this.getDefaultValue() != undefined && this.getDefaultValue() != '') {
             let d = '' + this.getDefaultValue();
             if (d == '@mention' || d == '@member') d = 'you';
             components.push(' = ' + d);

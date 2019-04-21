@@ -22,7 +22,7 @@ export class Nicknames extends Command {
         let target = input.getArgument('user') as GuildMember;
 
         let result = '';
-        input.member.settings.nameHistory.forEach(record => {
+        target.settings.nameHistory.forEach(record => {
             let timeAgo = _.now() - record.time;
             let m = moment(record.time);
             let isThisYear = (m.format('YYYY') === moment().format('YYYY'));

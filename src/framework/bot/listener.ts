@@ -3,6 +3,7 @@ import { Logger } from './logger';
 
 export class Listener {
     private logger: Logger;
+    private bindings: {[event: string]: Function} = {};
 
     constructor() {
         this.logger = new Logger('listener:' + this.constructor.name.toLowerCase());
@@ -19,98 +20,139 @@ export class Listener {
      * Starts the listener.
      */
     public start() {
-        let { Framework } = require('../framework');
-        let client = Framework.client as Client;
+        this.set('channelCreate', this.onChannelCreate);
+        this.set('channelDelete', this.onChannelDelete);
+        this.set('channelPinsUpdate', this.onChannelPinsUpdate);
+        this.set('channelUpdate', this.onChannelUpdate);
+        this.set('debug', this.onDebug);
+        this.set('disconnect', this.onDisconnect);
+        this.set('emojiCreate', this.onEmojiCreate);
+        this.set('emojiDelete', this.onEmojiDelete);
+        this.set('emojiUpdate', this.onEmojiUpdate);
+        this.set('error', this.onError);
+        this.set('guildBanAdd', this.onGuildBanAdd);
+        this.set('guildBanRemove', this.onGuildBanRemove);
 
-        client.on('channelCreate', this.onChannelCreate.bind(this));
-        client.on('channelDelete', this.onChannelDelete.bind(this));
-        client.on('channelPinsUpdate', this.onChannelPinsUpdate.bind(this));
-        client.on('channelUpdate', this.onChannelUpdate.bind(this));
-        client.on('debug', this.onDebug.bind(this));
-        client.on('disconnect', this.onDisconnect.bind(this));
-        client.on('emojiCreate', this.onEmojiCreate.bind(this));
-        client.on('emojiDelete', this.onEmojiDelete.bind(this));
-        client.on('emojiUpdate', this.onEmojiUpdate.bind(this));
-        client.on('error', this.onError.bind(this));
-        client.on('guildBanAdd', this.onGuildBanAdd.bind(this));
-        client.on('guildBanRemove', this.onGuildBanRemove.bind(this));
-
-        client.on('guildCreate', async (guild: Guild) => {
+        this.set('guildCreate', async (guild: Guild) => {
             await guild.load();
             await this.run(this.onGuildCreate(guild));
         });
 
-        client.on('guildDelete', async (guild: Guild) => {
+        this.set('guildDelete', async (guild: Guild) => {
             await guild.load();
             await this.run(this.onGuildDelete(guild));
         });
 
-        client.on('guildMemberAdd', async (member: GuildMember) => {
+        this.set('guildMemberAdd', async (member: GuildMember) => {
             await member.load();
             await this.run(this.onGuildMemberAdd(member));
         });
 
-        client.on('guildMemberAvailable', async (member: GuildMember) => {
+        this.set('guildMemberAvailable', async (member: GuildMember) => {
             await member.load();
             await this.run(this.onGuildMemberAvailable(member));
         });
 
-        client.on('guildMemberRemove', async (member: GuildMember) => {
+        this.set('guildMemberRemove', async (member: GuildMember) => {
             await member.load();
             await this.run(this.onGuildMemberRemove(member));
         });
 
-        client.on('guildMemberUpdate', async (om: GuildMember, nm: GuildMember) => {
+        this.set('guildMemberUpdate', async (om: GuildMember, nm: GuildMember) => {
             await om.load();
             await nm.load();
             await this.run(this.onGuildMemberUpdate(om, nm));
         });
 
-        client.on('guildMembersChunk', this.onGuildMembersChunk.bind(this));
-        client.on('guildMemberSpeaking', this.onGuildMemberSpeaking.bind(this));
-        client.on('guildUnavailable', this.onGuildUnavailable.bind(this));
-        client.on('guildUpdate', this.onGuildUpdate.bind(this));
+        this.set('guildMembersChunk', this.onGuildMembersChunk);
+        this.set('guildMemberSpeaking', this.onGuildMemberSpeaking);
+        this.set('guildUnavailable', this.onGuildUnavailable);
+        this.set('guildUpdate', this.onGuildUpdate);
 
-        client.on('message', async (message: Message) => {
-            if (message.channel.type != 'text') return;
-            await message.member.load();
-            await message.guild.load();
+        this.set('message', async (message: Message) => {
+            if (message.member) {
+                await message.member.load();
+                await message.guild.load();
+            }
+
             await this.run(this.onMessage(message));
         });
 
-        client.on('messageDelete', async (message: Message) => {
-            if (message.channel.type != 'text') return;
-            await message.member.load();
-            await message.guild.load();
+        this.set('messageDelete', async (message: Message) => {
+            if (message.member) {
+                await message.member.load();
+                await message.guild.load();
+            }
+
             await this.run(this.onMessageDelete(message));
         });
 
-        client.on('messageDeleteBulk', this.onMessageDeleteBulk.bind(this));
-        client.on('messageReactionAdd', this.onMessageReactionAdd.bind(this));
-        client.on('messageReactionRemove', this.onMessageReactionRemove.bind(this));
-        client.on('messageReactionRemoveAll', this.onMessageReactionRemoveAll.bind(this));
-        client.on('messageUpdate', this.onMessageUpdate.bind(this));
-        client.on('presenceUpdate', this.onPresenceUpdate.bind(this));
-        client.on('rateLimit', this.onRateLimit.bind(this));
-        client.on('reconnecting', this.onReconnecting.bind(this));
-        client.on('resume', this.onResume.bind(this));
-        client.on('roleCreate', this.onRoleCreate.bind(this));
-        client.on('roleDelete', this.onRoleDelete.bind(this));
-        client.on('roleUpdate', this.onRoleUpdate.bind(this));
-        client.on('userUpdate', this.onUserUpdate.bind(this));
-        client.on('voiceStateUpdate', this.onVoiceStateUpdate.bind(this));
-        client.on('warn', this.onWarn.bind(this));
+        this.set('messageDeleteBulk', this.onMessageDeleteBulk);
+        this.set('messageReactionAdd', this.onMessageReactionAdd);
+        this.set('messageReactionRemove', this.onMessageReactionRemove);
+        this.set('messageReactionRemoveAll', this.onMessageReactionRemoveAll);
+        this.set('messageUpdate', this.onMessageUpdate);
+        this.set('presenceUpdate', this.onPresenceUpdate);
+        this.set('rateLimit', this.onRateLimit);
+        this.set('reconnecting', this.onReconnecting);
+        this.set('resume', this.onResume);
+        this.set('roleCreate', this.onRoleCreate);
+        this.set('roleDelete', this.onRoleDelete);
+        this.set('roleUpdate', this.onRoleUpdate);
+        this.set('userUpdate', this.onUserUpdate);
+        this.set('voiceStateUpdate', this.onVoiceStateUpdate);
+        this.set('warn', this.onWarn);
+    }
+
+    /**
+     * Sets and binds an event listener.
+     */
+    private set(event: string, fn: Function) {
+        let { Framework } = require('../framework');
+        let client = Framework.client as Client;
+
+        // Function wrapper
+        let wrapper = async (...args: any[]) => {
+            await this.run(fn.apply(this, args));
+        };
+
+        // Apply event listener
+        this.bindings[event] = wrapper;
+        client.on(event, wrapper);
+    }
+
+    /**
+     * Stops the listeners.
+     */
+    public stop() {
+        let { Framework } = require('../framework');
+        let client = Framework.client as Client;
+
+        // Remove from bindings
+        for (let event in this.bindings) {
+            let fn = this.bindings[event];
+            client.removeListener(event, fn as any);
+        }
+
+        // Reset bindings
+        this.bindings = {};
     }
 
     /**
      * Awaits the given value if it is a promise.
      */
-    private async run(r: void | Promise<void>) {
-        if (Promise.resolve(r) == r) {
-            r.catch(err => {
-                console.log(err);
-            });
-        }
+    private run(r: void | Promise<void>) : Promise<void> {
+        return new Promise(resolve => {
+            if (Promise.resolve(r) == r) {
+                r.then(resolve, err => {
+                    console.log(err);
+                    resolve();
+                });
+            }
+            else {
+                resolve();
+            }
+        });
     }
 
     /**

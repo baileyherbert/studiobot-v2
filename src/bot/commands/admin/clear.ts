@@ -99,7 +99,7 @@ export class Clear extends Command {
                         }
                     }
 
-                    await sleep(2000);
+                    await sleep(1000);
                     deletedTotal++;
 
                     if (++steps == 5) {
