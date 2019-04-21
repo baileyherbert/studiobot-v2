@@ -44,7 +44,11 @@ export class AkinatorGame extends Command {
 
         // Main game loop
         while (true) {
+            this.getLogger().debug(`Session ${step.session.sessionId}: ${step.question} (${step.certainty}%)`);
+
+            // Get the user's response as a number
             let reaction = await this.getResponse(input);
+            this.getLogger().debug(`Session ${step.session.sessionId}: Answered ${reaction}`);
 
             // Go back to the previous step
             if (reaction == 5) {
@@ -66,6 +70,9 @@ export class AkinatorGame extends Command {
                 let photo = win.photo_url;
                 let name = win.name;
                 let description = win.description;
+
+                // Log the winner
+                this.getLogger().debug(`Session ${step.session.sessionId}: Winner is ${name} (${description}).`);
 
                 // Display the winner
                 await input.channel.send({
