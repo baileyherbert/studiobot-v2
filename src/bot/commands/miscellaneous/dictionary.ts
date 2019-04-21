@@ -24,15 +24,16 @@ export class Dictionary extends Command {
                 name: 'word',
                 description: 'the word to look up',
                 constraint: 'string',
-                required: true
+                required: true,
+                expand: true
             }
         ]})
     }
 
     execute (input: Input) {
         let word : string = input.getArgument('word') as string;
-        
-        let requestUrl = `${apiBaseUrl}${spelledLike}${word}&${metadata}${definition}`;
+
+        let requestUrl = `${apiBaseUrl}${spelledLike}${encodeURIComponent(word)}&${metadata}${definition}`;
 
         let req = request(requestUrl, (error: any, response: Response, body: any) => {
             if (error){
@@ -50,7 +51,7 @@ export class Dictionary extends Command {
         if (data !== undefined && data.length > 0 && data[0].defs !== undefined) {
             let returnedWord = data[0].word as string;
             let definitions: { name: string, value: string }[] = this.GetDefinitions(data);
-            
+
             input.channel.send({
             embed: {
                 color: Colors.DARK_GREEN,
