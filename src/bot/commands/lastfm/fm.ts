@@ -33,7 +33,7 @@ export class LastFm extends Command {
         if (!user) { user = db.lastfmId; }
 
         let key = Framework.getConfig().authentication.lastfm.key;
-        
+
         let lastfmURL = 'http://ws.audioscrobbler.com/2.0/?method=';
         let queryString = user + '&api_key= ' + key + '&limit=2&format=json';
 
@@ -151,7 +151,7 @@ export class LastFm extends Command {
                                 image: {
                                     url: album.image[3]['#text']
                                 }
-                            }                            
+                            }
                         })
 
                     });
@@ -180,21 +180,21 @@ export class LastFm extends Command {
                         queryString = id + '&api_key= ' + key + '&limit=2&format=json';
 
                         let newRequestURL = request((lastfmURL + 'artist.getInfo&artist=' + name + '&mbid=' + queryString), (error: any, response: Response, body: any) => {
-                            
+
                             if (error) {
                                 input.channel.send(`${Emoji.ERROR}  Connection error! Unable to retrieve lastfm data.`);
                                 return;
                             }
-    
+
                             let newParsed = JSON.parse(body);
-    
+
                             if (newParsed.artist == undefined) {
                                 input.channel.send(`${Emoji.ERROR}  Unable to retrieve artist data.`);
                                 return;
                             }
-    
+
                             let artist = newParsed.artist
-                            
+
                             input.channel.send( {
                                 embed: {
                                     color: 3447003,
@@ -214,7 +214,7 @@ export class LastFm extends Command {
                                             value: artist.stats.playcount.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                                         }
                                     ]
-                                }                            
+                                }
                             })
                         })
 
@@ -381,8 +381,8 @@ export class LastFm extends Command {
                 if (parsed.results.albummatches == undefined) {
                     resolve('https://upload.wikimedia.org/wikipedia/commons/4/48/BLANK_ICON.png');
                     return;
-                } 
-                
+                }
+
                 let url = '';
                 let result = 0;
                 while (true) {
@@ -401,10 +401,10 @@ export class LastFm extends Command {
                 if (url == '') {
                     resolve('https://upload.wikimedia.org/wikipedia/commons/4/48/BLANK_ICON.png');
                     return;
-                } 
+                }
 
                 resolve(url);
-                
+
             });
         });
     }
@@ -421,20 +421,21 @@ export class LastFm extends Command {
                 if (parsed.results.artistmatches == undefined) {
                     resolve('https://upload.wikimedia.org/wikipedia/commons/4/48/BLANK_ICON.png');
                     return;
-                } 
-                
+                }
+
                 let url = '';
                 if (parsed.results.artistmatches.artist[0]) {
                     url = parsed.results.artistmatches.artist[0].image[3]['#text'];
-                } 
+                }
 
                 if (url == '') {
                     resolve('https://upload.wikimedia.org/wikipedia/commons/4/48/BLANK_ICON.png');
                     return;
-                } 
+                }
 
                 resolve(url);
-                
+
             });
         });
     }
+}
