@@ -24,7 +24,6 @@ export class LobbyManager {
 
         if (!isNaN(lobbyIndex))
         {
-            console.log("Okay");
             this.RemoveLobby(lobbyIndex);
         }
     }
@@ -67,6 +66,8 @@ export class LobbyManager {
     }
 
     RemoveLobby(lobbyIndex: number){
+        let lobby: Lobby = this.lobbies[lobbyIndex];
         this.lobbies.splice(lobbyIndex);
+        lobby.ShutDown();
     }
 }

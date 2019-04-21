@@ -438,4 +438,3 @@ export class LastFm extends Command {
             });
         });
     }
-}

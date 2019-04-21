@@ -2,6 +2,7 @@ import { Command, Input } from '@api';
 import { GuildMember } from 'discord.js';
 import { TextChannel } from 'discord.js';
 import { Message } from 'discord.js';
+import { Framework } from '@core/framework';
 
 export class Quote extends Command {
     constructor() {
@@ -44,7 +45,7 @@ export class Quote extends Command {
 
                 //User to attribute quote to
                 if (user) {
-                    if (!quote) {
+                    if (!quote && user.id != Framework.getClient().user.id) {
                         let q = await this.getLastMessage(<TextChannel>input.channel, user);
                         if (q) quote = q.content;
                     }
@@ -54,7 +55,7 @@ export class Quote extends Command {
                             time: _.now(),
                             message: quote
                         });
-                        input.channel.send('**[' + (db.quotes.length).toString() + ']** - ' + quote + ' —' + user.displayName);
+                        input.channel.send('**[' + (db.quotes.length).toString() + ']** - ' + quote.substring(0, Math.min(1900, quote.length)) + ' —' + user.displayName);
                     } else {
                         input.channel.send("No quote to add");
                     }
@@ -68,7 +69,7 @@ export class Quote extends Command {
                         time: _.now(),
                         message: quote
                     });
-                    input.channel.send('**[' + (db.quotes.length).toString() + ']** - ' + quote + ' —Anonymous');
+                    input.channel.send('**[' + (db.quotes.length).toString() + ']** - ' + quote.substring(0, Math.min(1900, quote.length)) + ' —Anonymous');
                 }
                 break;
             case 'remove':
@@ -100,7 +101,7 @@ export class Quote extends Command {
                     if (user) {
                         let userQuotes = _.filter(db.quotes, function(o) { return o.memberId == (user as GuildMember).id; })
                         let id = _.random(0, _.size(userQuotes)-1);
-                        input.channel.send('**[' + (db.quotes.indexOf(userQuotes[id])+1).toString() + ']** - ' + userQuotes[id].message + ' —' + user.displayName);
+                        input.channel.send('**[' + (db.quotes.indexOf(userQuotes[id])+1).toString() + ']** - ' + userQuotes[id].message.substring(0, Math.min(1900, userQuotes[id].message.length)) + ' —' + user.displayName);
                     //from all users
                     } else {
                         let id = _.random(0, _.size(db.quotes)-1);
@@ -110,7 +111,7 @@ export class Quote extends Command {
                         } else {
                             member = "Anonymous";
                         }
-                        input.channel.send('**[' + (id+1).toString() + ']** - ' + db.quotes[id].message + ' —' + member);
+                        input.channel.send('**[' + (id+1).toString() + ']** - ' + db.quotes[id].message.substring(0, Math.min(1900, db.quotes[id].message.length)) + ' —' + member);
                     }
                 } else {
                     input.channel.send('No quotes saved.');

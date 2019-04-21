@@ -13,6 +13,8 @@ export abstract class Lobby {
 
     protected lobbyTypeName : string;
 
+    protected abort : boolean;
+
     constructor (server: Guild, channel: TextChannel | DMChannel | GroupDMChannel, manager: LobbyManager, lobbyTypeName : string, player1: GuildMember | null = null, player2: GuildMember | null = null){
         this.player1 = player1;
         this.player2 = player2;
@@ -22,6 +24,8 @@ export abstract class Lobby {
 
         this.lobbyManager = manager;
         this.lobbyTypeName = lobbyTypeName;
+
+        this.abort = false;
     }
 
     AddPlayer(player: GuildMember) : string {
@@ -63,5 +67,10 @@ export abstract class Lobby {
 
     GetType() : string {
         return this.lobbyTypeName;
+    }
+
+    ShutDown() {
+        this.abort = true;
+        this.lobbyChannel.send(`Aborting ${this.lobbyTypeName} lobby.`)
     }
 }

@@ -7,10 +7,10 @@ export let Sections : HelpSections = {
     'Basic': [ 'help', 'ping', 'uptime', 'changelog', 'invite' ],
     'Admin': [ 'prefix', 'clear', 'spam' ],
     'Economy': [ 'balance', 'daily', 'pay', 'richest', 'inventory' ],
-    'Games': [ 'game', 'madlib', 'spin', 'race' ],
+    'Games': [ 'game', 'madlib', 'spin', 'race', 'hangman' ],
     'Social': [ 'level', 'rank', 'leaderboard', 'mock', 'rip', 'quote', 'breakice' ],
-    'Utilities': [ 'music', 'weather', 'poll', 'avatar', 'nicknames', 'lastfm', 'flip', 'countdown' ],
-    'Random': [ 'between', 'csv', '8ball', 'poem', 'pun', 'roll', 'trivia', 'user', 'inspire', 'noun', 'verb', 'adjective', 'adverb', 'twister', 'coinflip', 'fortune' ]
+    'Utilities': [ 'music', 'weather', 'forecast', 'poll', 'avatar', 'nicknames', 'lastfm', 'flip', 'countdown', 'distance', 'color', 'youtube' ],
+    'Random': [ 'between', 'csv', '8ball', 'poem', 'pun', 'roll', 'trivia', 'user', 'inspire', 'noun', 'verb', 'adjective', 'adverb', 'twister', 'coinflip', 'fortune', 'dog', 'cat', 'yomomma', 'joke', 'ascii', 'lenny' ]
 };
 
 export class Help extends Command {

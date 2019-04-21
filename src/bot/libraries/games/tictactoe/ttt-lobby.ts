@@ -80,7 +80,12 @@ export class TTTLobby extends Lobby {
             });
         }
         else {
-            this.boardMessage.edit(this.board.GetBoardVisual());
+            this.boardMessage.edit(this.board.GetBoardVisual())
+            //Fixes the issue with deleting the board.
+            .catch(err => {
+                console.log(err);
+                this.ShutDown();
+            });
         }
 
         let playerWithTurn = this.GetPlayerWithTurn();
@@ -95,13 +100,23 @@ export class TTTLobby extends Lobby {
                 });
             }
             else {
-                this.turnMessage.edit(turnMsgText);
+                this.turnMessage.edit(turnMsgText)
+                .catch(err => {
+                    console.log(err);
+                    this.lobbyChannel.send(turnMsgText).then((msg)=>{
+                        this.turnMessage = msg as Message;
+                    });
+                });
             }
         }
         return { playerWithTurn, playerSpaceIcon };
     }
 
     GameLoop(){
+        if (this.abort){
+            return;
+        }
+
         let { playerWithTurn, playerSpaceIcon } = this.BeginNewTurn();
 
         let doReturn: boolean = this.IsGameOver();
@@ -115,14 +130,21 @@ export class TTTLobby extends Lobby {
         }
 
         let coordinateRegex = new RegExp('([' + this.rowString + this.colString + '])', 'gi');
-        const filter = (message : Message) => message.member === playerWithTurn
-                                && coordinateRegex.test(message.content);
+        const filter = (message : Message) => 
+                                (message.member === playerWithTurn
+                                && coordinateRegex.test(message.content))
+                                || this.abort === true;
+        
         const collector = this.lobbyChannel.createMessageCollector(filter);
 
 
         let successfullyChangedTile = false;
         let self = this;
         collector.once('collect', function(message){
+            if (self.abort === true){
+                return;
+            }
+
             let verticalInput: string | null = self.GetInput(self, message, new RegExp('([' + self.colString + '])', 'i'));
             let horizontalInput: string | null = self.GetInput(self, message, new RegExp('([' + self.rowString + '])', 'i'));
 

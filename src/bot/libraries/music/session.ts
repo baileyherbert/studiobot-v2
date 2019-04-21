@@ -4,11 +4,17 @@ import {MusicMessagePlayer} from "@libraries/music/music-message-player";
 import {Input} from "@api";
 import {getInfo, validateURL} from "ytdl-core";
 import {VideoDownloader} from "@libraries/music/video-download";
-import {ProgressBar} from "@libraries/utilities/progress-bar";
 import {numberedList} from "@libraries/utilities/numbered-list";
 import {Emoji} from "@libraries/emoji";
 import {searchyt} from "@libraries/music/search-yt";
 import {userRangedChoice} from "@libraries/utilities/user-range-choice";
+import {parseDuration} from "@libraries/prettify-ms";
+
+// TODO : Add volume buttons
+// TODO : Add a queue embed
+// TODO : Add session specific 'queue' of up to 100 song references for prev / next functions
+// TODO : For the queue, add 'suggestions' that the users can easily use to add songs to the queue
+// TODO : Add support for soundcloud.
 
 export class Session {
     public guild: Guild;
@@ -19,7 +25,9 @@ export class Session {
     public queue: SongInfo[];
     public autoplaying: boolean;
     public skipping: boolean;
-    public messagePlayer: MusicMessagePlayer;
+    public messagePlayer?: MusicMessagePlayer;
+    public paused = false;
+    public timeOffset = 0;
 
     constructor(guild: Guild, channel: TextChannel) {
         this.guild = guild;
@@ -27,8 +35,6 @@ export class Session {
         this.queue = [];
         this.autoplaying = false;
         this.skipping = false;
-
-        this.messagePlayer = new MusicMessagePlayer(channel);
     };
 
     private async playUrl(url: string, member: GuildMember) {
@@ -44,10 +50,7 @@ export class Session {
 
         if (!this.connection) {
             this.connection = await video.requester.voiceChannel.join();
-
-            if (!this.connection) return;
             this.currentlyPlaying = this.queue.shift();
-            if (this.currentlyPlaying) await this.messagePlayer.update(this.currentlyPlaying);
             await this.startStream();
         }
         else {
@@ -60,18 +63,35 @@ export class Session {
             throw new Error('Called startStream on an un-initialized server');
 
         let dl = new VideoDownloader(this.currentlyPlaying.url, this);
-        let progressBar = new ProgressBar(`Buffering Song... **${this.currentlyPlaying.title}**`, this.currentlyPlaying.textChannel);
+        // let progressBar = new ProgressBar(`Buffering Song... **${this.currentlyPlaying.title}**`, this.currentlyPlaying.textChannel);
+        // await progressBar.initialize();
 
-        await progressBar.initialize();
+        let percent = 0;
+        let msgFunc = () => `${Emoji.LOADING}  Buffering **${this.currentlyPlaying!.title}** (${(percent * 100).toFixed(0)})%`;
+        let message = await this.currentlyPlaying.textChannel.send(msgFunc()) as Message;
 
-        dl.on('progress', percent => progressBar.update(percent));
+        // dl.on('progress', percent => progressBar.update(percent));
+        dl.on('progress', p => {
+            percent = p;
+        });
+
+        let id = setInterval(async () => {
+            if (!message || !this.currentlyPlaying) clearInterval(id);
+            else if (percent < 1) await message.edit(msgFunc());
+            else clearInterval(id);
+        }, 1000);
 
         dl.on('complete', async (file) => {
-            if (!this.currentlyPlaying)
-                throw new Error('Called startStream on an un-initialized server');
-            progressBar.update(1);
+            await message.delete();
+            if (!this.currentlyPlaying) throw new Error('Called startStream on an un-initialized server');
             this.currentlyPlaying.file = file;
             await this.seekStream(0);
+            if (this.currentlyPlaying)
+                if (!this.messagePlayer) {
+                    this.messagePlayer = new MusicMessagePlayer(this);
+                    await this.messagePlayer.initialise();
+                }
+                else await this.messagePlayer.repost();
         });
     }
 
@@ -81,10 +101,9 @@ export class Session {
         if (!this.currentlyPlaying.file)
             throw new Error("Server is ready, but no music file is set.");
 
-        // console.log(`Attempting to seek in stream to ${timeStamp}`);
-
         let defaultVolume = this.guild.settings.voice.volume;
         let t = timeStamp || 0;
+        this.timeOffset = t;
 
         this.skipping = true;
         this.dispatcher = await this.connection.playFile(this.currentlyPlaying.file,
@@ -96,24 +115,38 @@ export class Session {
             });
         this.dispatcher.setVolume(defaultVolume);
         this.createListeners();
+        // await this.messagePlayer!.update(this.currentlyPlaying);
         this.skipping = false;
     }
 
     private async playNextOrEnd() {
         if (this.skipping) return;
         this.skipping = true;
+        if (this.queue.length <= 0 && this.autoplaying) {
+            await this.queueRelated();
+        }
+
         if (this.queue.length > 0) {
             this.currentlyPlaying = this.queue.pop();
             await this.startStream();
             this.skipping = false;
             return;
         }
-        if (this.currentlyPlaying) {
+        if (this.currentlyPlaying)
             await this.currentlyPlaying.textChannel.send('End of queue reached, leaving the voice channel.');
-            this.currentlyPlaying = undefined;
-        }
-        if (this.connection)
+        await this.terminateConnection();
+        this.skipping = false;
+    }
+
+    public async terminateConnection() {
+        this.skipping = true;
+        this.currentlyPlaying = undefined;
+        if (this.dispatcher) this.dispatcher = undefined;
+        if (this.connection) {
             this.connection.disconnect();
+            this.connection = undefined;
+        }
+        if (this.messagePlayer) await this.messagePlayer.clean();
         this.skipping = false;
     }
 
@@ -126,7 +159,6 @@ export class Session {
         this.dispatcher.on('start', async () => {
             if (!this.currentlyPlaying) return;
             // await this.currentlyPlaying.textChannel.send(`Now playing **${this.currentlyPlaying.title}**`)
-            await this.messagePlayer.repost(this.currentlyPlaying);
         });
     }
 
@@ -176,9 +208,10 @@ export class Session {
         }
 
         let number = parseFloat(options);
+        let songLength = parseInt(this.currentlyPlaying.info.length_seconds);
 
-        if (!(!isNaN(number) && number <= 100 && number >= 1)) {
-            await this.channel.send(`Input must be a number from 1-100`);
+        if (!(!isNaN(number) && number <= songLength && number >= 0)) {
+            await this.channel.send(`Input must be a number from 1-${parseDuration(songLength)}`);
             return;
         }
 
@@ -196,7 +229,8 @@ export class Session {
         }
 
         this.dispatcher.resume();
-        await this.channel.send(`Resuming **${this.currentlyPlaying.title}**`);
+        this.paused = false;
+        // await this.channel.send(`Resuming **${this.currentlyPlaying.title}**`);
     }
 
     async skip() {
@@ -206,9 +240,9 @@ export class Session {
 
         this.dispatcher.emit('end');
 
-        let msg = await this.channel.send(`Skipping ${this.currentlyPlaying.title}`) as Message;
-        await sleep(2000);
-        await msg.delete();
+        // let msg = await this.channel.send(`Skipping ${this.currentlyPlaying.title}`) as Message;
+        // await sleep(2000);
+        // await msg.delete();
     }
 
     async pause() {
@@ -222,7 +256,8 @@ export class Session {
         }
 
         this.dispatcher.pause();
-        await this.channel.send(`${Emoji.SUCCESS} Pausing **${this.currentlyPlaying.title}**`);
+        this.paused = true;
+        // await this.channel.send(`${Emoji.SUCCESS} Pausing **${this.currentlyPlaying.title}**`);
     }
 
     async search(input: Input, options: string | undefined) {
@@ -249,11 +284,12 @@ export class Session {
 
     async autoplay(options: string | undefined) {
         if (options == null) {
-            return await this.channel.send(`${Emoji.HELP} Autoplay is currently set to ${this.autoplaying}`);
+            return await this.channel.send(`${Emoji.HELP}  Autoplay is currently set to ${this.autoplaying}`);
         }
 
         if (/yes|1|true|on|/.test(options)) this.autoplaying = true;
         else if (/0|false|no|off/.test(options)) this.autoplaying = false;
+        return await this.channel.send(`${Emoji.SUCCESS}  Setting autoplay to ${this.autoplaying}`);
     }
 
     async loop(options: string | undefined) {
@@ -273,5 +309,25 @@ export class Session {
         }
 
 
+    }
+
+    private async queueRelated() {
+        if (!this.currentlyPlaying) return;
+        let relatedList = [];
+
+        let index;
+        for (index in this.currentlyPlaying.info.related_videos) {
+            let related = this.currentlyPlaying.info.related_videos[index];
+            if (!related.id) continue;
+            relatedList.push(related);
+        }
+
+        let chosen = relatedList[Math.floor(Math.random() * relatedList.length / 3)];
+        while (!chosen.id)
+            chosen = relatedList[Math.floor(Math.random() * relatedList.length / 3)];
+        let videoInfo = `https://www.youtube.com/watch?v=${chosen.id}`;
+
+        // console.log(`queueing related`);
+        await this.playUrl(videoInfo, this.currentlyPlaying.requester);
     }
 }

@@ -37,6 +37,11 @@ export class Hangman extends Command {
                 return;
             }
 
+            if (err.message == 'Cannot send messages to this user') {
+                await input.channel.send(`${input.member} I couldn't send you a direct message to start the hangman game.`);
+                return;
+            }
+
             await input.channel.send('Host cancelled the game.') as Message;
             return;
         }
@@ -59,12 +64,12 @@ export class Hangman extends Command {
         game.on('guess', async (correct: boolean) => {
             let text = correct ? 'Found a new letter! Keep guessing!' : 'That letter was not in the word. Keep guessing!';
 
-            //lastMessage.deleteAfter(5000);
+            lastMessage.deleteAfter(0);
             lastMessage = await input.channel.send(text + '\n' + game.getBoard()) as Message;
         });
 
         game.on('finished', async (win: boolean) => {
-            //lastMessage.deleteAfter(5000);
+            lastMessage.deleteAfter(0);
 
             // Stop the collector
             collector.stop();
@@ -75,6 +80,19 @@ export class Hangman extends Command {
             // Show output
             let phrase = '\n```' + word + '\n```';
             await input.channel.send((win ? 'The word or phrase was guessed correctly!' : 'The word or phrase was not guessed!') + phrase);
+        });
+
+        game.on('expired', async() => {
+            lastMessage.deleteAfter(0);
+
+            // Stop the collector
+            collector.stop();
+
+            // Expire the game
+            delete this.games[input.channel.id];
+
+            // Show output
+            await input.channel.send(`The hangman game was ended due to inactivity.`);
         });
     }
 

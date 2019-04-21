@@ -3,15 +3,18 @@ import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Ro
 import { LobbyManager } from '@bot/libraries/games/lobby-manager'
 import { TTTLobby } from '@bot/libraries/games/tictactoe/ttt-lobby';
 import { Lobby } from '@bot/libraries/games/lobby';
+import { RPSLobby } from '@bot/libraries/games/rps/rps-lobby';
 
 export module gameEnums{
     export enum GameTypeEnum {
-        TicTacToe = 0
+        TicTacToe = 0,
+        RockPaperScissors = 1
     }
 }
 
 const gameTypeAlias : string[][] = [
-    ['tictactoe', 'ttt', 'tictac', 'tic']
+    ['tictactoe', 'ttt', 'tictac', 'tic'],
+    ['rps', 'rockpaperscissors', 'rockbeatsall', 'itsnotjustaboulderitsarock']
 ]
 
 export class QueueJoinGame extends Command {
@@ -28,7 +31,7 @@ export class QueueJoinGame extends Command {
                 {
                     name: 'action',
                     required: true,
-                    options: ['start', 'join']
+                    options: ['start', 'join', 'abort']
                 },
                 /*{
                     name: 'gameType',
@@ -53,8 +56,11 @@ export class QueueJoinGame extends Command {
         if (action == 'start') {
             this.start(input, options);
         }
-        else {
-            this.join(input, options);
+        else if (action == 'join') {
+            this.join(input, options, action);
+        }
+        else if (action == 'abort') {
+            this.abort(input, options, action);
         }
     }
 
@@ -74,10 +80,14 @@ export class QueueJoinGame extends Command {
         let self = this;
         collector.once('collect', function(message){
             let lobby : Lobby | null = null;
-            let tttRegexp = new RegExp(self.gameTypeRegexpStrings[gameEnums.GameTypeEnum.TicTacToe])
-            if (message.content.match(tttRegexp))
-            {
+            let tttRegexp = new RegExp(self.gameTypeRegexpStrings[gameEnums.GameTypeEnum.TicTacToe]);
+            if (message.content.match(tttRegexp)){
                 lobby = new TTTLobby(input.guild, input.channel, self.lobbyManager, input.member, null);
+            }
+
+            let rpsRegexp = new RegExp(self.gameTypeRegexpStrings[gameEnums.GameTypeEnum.RockPaperScissors]);
+            if (message.content.match(rpsRegexp)){
+                lobby = new RPSLobby(input.guild, input.channel, self.lobbyManager, input.member, null);
             }
 
             if (lobby) {
@@ -93,10 +103,10 @@ export class QueueJoinGame extends Command {
      * @param input
      * @param options
      */
-    private join(input: Input, options: string | undefined) {
+    private join(input: Input, options: string | undefined, action: string) {
         let lobbiesInServer = this.lobbyManager.GetLobbiesInChannel(input.guild, input.channel);
         let message = "Lobbies:";
-        this.DisplayAllLobbies(lobbiesInServer, message, input);
+        this.DisplayAllLobbies(lobbiesInServer, message, input, action);
 
         const filter = (number: number) => !isNaN(number)
             && this.NumberIsValidLobby(number, lobbiesInServer)
@@ -114,8 +124,29 @@ export class QueueJoinGame extends Command {
                 self.lobbyManager.BeginGameInLobby(lobbyIndex);
             }
             else{
-                console.log('ouch');
+                //Do nothing
             }
+        });
+    }
+
+    private abort(input: Input, options: string | undefined, action: string) {
+        let lobbiesInServer = this.lobbyManager.GetLobbiesInChannel(input.guild, input.channel);
+        if (lobbiesInServer.length <= 0){
+            input.channel.send("No lobbies to delete");
+            return;
+        }
+
+        let message = "Lobbies:";
+        this.DisplayAllLobbies(lobbiesInServer, message, input, action);
+
+        const filter = (number: number) => !isNaN(number)
+            && this.NumberIsValidLobby(number, lobbiesInServer)
+            && !this.IsAlreadyInLobby(lobbiesInServer, number, input.member);
+        const collector = input.channel.createMessageCollector(filter);
+
+        let self = this;
+        collector.once('collect', function(number: number) {
+            self.lobbyManager.FindAndRemoveLobby(lobbiesInServer[number]);
         });
     }
 
@@ -132,20 +163,18 @@ export class QueueJoinGame extends Command {
 
     /**
      * Checks if the message contains any game type
-     * 
-     * @param message 
+     *
+     * @param message
      */
     private CompareGameType(message : Message) : boolean {
         let content : string = message.content;
         let regexp : RegExp = new RegExp(this.testGameTypeRegexpString);
-        console.log(this.testGameTypeRegexpString);
-        console.log(this.gameTypeRegexpStrings);
         return regexp.test(content);
     }
 
     /**
      * Creates regex string to detect a single game type, Used to determine the specific type of game that a lobby will contain
-     * 
+     *
      * @param gameTypeIndex
      */
     private CreateGameTypeRegexpString(gameTypeIndex: number) : string {
@@ -185,7 +214,7 @@ export class QueueJoinGame extends Command {
      * @param message
      * @param input
      */
-    private DisplayAllLobbies(lobbiesInServer: Lobby[], message: string, input: Input) {
+    private DisplayAllLobbies(lobbiesInServer: Lobby[], message: string, input: Input, action: string) {
         for (let index = 0; index < lobbiesInServer.length; index++) {
             let currentLobby = lobbiesInServer[index];
 
@@ -201,13 +230,12 @@ export class QueueJoinGame extends Command {
                 message += this.AddPlayerNameToMessage(currentLobby.GetPlayer(2) as GuildMember);
             }
             
-            console.log(lobbiesInServer[index].GetType());
             message += String(lobbiesInServer[index].GetType());
         }
 
         //input.channel.send(message);
         input.channel.send("```" + message + "```");
-        input.channel.send("Select the lobby you wish to join");
+        input.channel.send(`Select the lobby you wish to ${action}`);
         //input.channel.send(message.replace(/(.+|\n+)/g, '```$1```'));
     }
 
@@ -234,6 +262,10 @@ export class QueueJoinGame extends Command {
      * Check if lobby has vacancies
      */
     private IsLobbyOpen(lobbiesInServer: Lobby[], number: number) {
+        if (!lobbiesInServer[number]) {
+            return false;
+        }
+
         return lobbiesInServer[number].GetPlayer(1) === null || lobbiesInServer[number].GetPlayer(2) === null;
     }
 

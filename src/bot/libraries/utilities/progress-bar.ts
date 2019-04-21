@@ -10,8 +10,11 @@ export function progressBarText(percent: number, maxLength: number, progressive:
 
     let result = '` 󠀀󠀀' + ('█').repeat(loadedChars);
     if (loadedChars < maxLength) {
+        if (progressive) {
+            result += '>';
+            maxLength--;
+        }
         result += ' 󠀀󠀀'.repeat(maxLength - loadedChars);
-        if (progressive) result += '>';
     }
     result += '󠀀`';
 
@@ -39,7 +42,7 @@ export class ProgressBar {
     }
 
     private generateMessage(percent: number) {
-        return `${this.title}` + '\n```[' + progressBarText(percent, this.maxChars, true) + ']```';
+        return `${this.title}` + '\n' + progressBarText(percent, this.maxChars, true);
     }
 
     async initialize() {

@@ -7,12 +7,19 @@ export class HangmanGame extends EventEmitter {
     private guessed : string[];
     private incorrect = 0;
 
+    private startTime : number;
+    private lastActivityTime : number;
+    private expirationTimeout: NodeJS.Timeout | undefined;
+
     constructor(word: string) {
         super();
 
         this.board = new Board(this);
         this.word = word;
         this.guessed = [];
+        this.startTime = this.lastActivityTime = (new Date()).getTime();
+
+        this.heartbeat();
     }
 
     /**
@@ -33,6 +40,7 @@ export class HangmanGame extends EventEmitter {
      * Returns true if the given letter has been guessed already.
      */
     hasGuessed(letter: string) {
+        this.heartbeat();
         return this.guessed.indexOf(letter.toLowerCase()) >= 0;
     }
 
@@ -40,10 +48,15 @@ export class HangmanGame extends EventEmitter {
      * Guesses the letter and returns `true` if the guess was correct.
      */
     guess(letter: string) : boolean {
+        this.heartbeat();
         this.guessed.push(letter = letter.toLowerCase());
 
         if (this.word.indexOf(letter) >= 0) {
             if (this.won()) {
+                if (this.expirationTimeout) {
+                    clearTimeout(this.expirationTimeout);
+                }
+
                 this.emit('finished', true);
                 return true;
             }
@@ -53,6 +66,10 @@ export class HangmanGame extends EventEmitter {
         }
         else {
             if (++this.incorrect >= 7) {
+                if (this.expirationTimeout) {
+                    clearTimeout(this.expirationTimeout);
+                }
+
                 this.emit('finished', false);
                 return false;
             }
@@ -93,6 +110,20 @@ export class HangmanGame extends EventEmitter {
     }
 
     /**
+     * Returns the time the game started.
+     */
+    getStartTime() {
+        return this.startTime;
+    }
+
+    /**
+     * Returns the number of milliseconds since the game's last activity.
+     */
+    getLastActivity() {
+        return (new Date()).getTime() - this.lastActivityTime;
+    }
+
+    /**
      * Returns the word, with all letters that haven't yet been guessed replaced with underscores.
      */
     toString() {
@@ -104,6 +135,18 @@ export class HangmanGame extends EventEmitter {
         });
 
         return output.join(' ');
+    }
+
+    /**
+     * Updates the internal activity timer.
+     */
+    private heartbeat() {
+        if (this.expirationTimeout) {
+            clearTimeout(this.expirationTimeout);
+        }
+
+        this.lastActivityTime = (new Date()).getTime();
+        this.expirationTimeout = setTimeout(() => this.emit('expired'), 3600000);
     }
 }
 

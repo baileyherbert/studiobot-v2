@@ -26,9 +26,13 @@ export class Documentation {
             result += `•  \`${arg.getName()}\`` + (arg.getDescription() ? `  –  ${arg.getDescription()}` : '');
             result += '\n';
 
-            if (options && options.length > 1) {
+            if (options && options.length > 1 && options.length <= 6) {
                 options.forEach((option : any) => {
-                    result += `    ‣  \`${option}\`\n`;
+                    let segment = `    ‣  \`${option}\`\n`;
+
+                    if (result.length + segment.length <= 1024) {
+                        result += segment;
+                    }
                 });
             }
         });
