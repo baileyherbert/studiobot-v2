@@ -10,7 +10,7 @@ export class Richest extends Command {
             arguments: [
                 {
                     name: 'limit',
-                    description: 'The maximum number of entries to display.',
+                    description: 'The maximum number of entries to display (min: 5 max: 25).',
                     constraint: 'number',
                     default: 10,
                     error: true,
