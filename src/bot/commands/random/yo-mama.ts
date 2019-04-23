@@ -6,15 +6,15 @@ export class Noun extends Command {
     constructor() {
         super({
             name: 'yomama',
-            aliases: ['yomomma', 'yomamma', 'yomoma', 'yomom'], 
+            aliases: ['yomomma', 'yomamma', 'yomoma', 'yomom'],
             description: `Displays a random Yo' Mama joke.`
         });
     }
 
-    execute(input: Input) {
+    async execute(input: Input) {
         let rnd = Math.floor(Math.random() * yoMama.length);
 
-        input.channel.send({
+        await input.channel.send({
             embed:
             {
                 color: 3447003,

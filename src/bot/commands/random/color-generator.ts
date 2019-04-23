@@ -1,5 +1,5 @@
 import { Command, Input } from '@api';
-import { Emoji } from '@bot/libraries/emoji';
+import { Emoji } from '@libraries/emoji';
 import { RichEmbed } from 'discord.js';
 
 export class Color extends Command {

@@ -1,9 +1,7 @@
-import { Command, Input, Listener } from '@api';
+import { Command, Input } from '@api';
 import * as request from 'request';
 import { Message } from 'discord.js';
 import { Emoji } from '@bot/libraries/emoji';
-import { Url } from 'url';
-const entities = require("html-entities").AllHtmlEntities;
 
 let breeds: string[] = [
     "affenpinscher",
@@ -195,18 +193,13 @@ export class Dog extends Command {
                     {
                         url: parsedBody
                     }
-            }
+                }
             });
-
         });
     }
 }
 
 type ApiResponse = {
-    message: Url;
-    link: Url;
+    message: string;
+    link: string;
 };
-
-// type ApiResponseCute = {
-
-// };

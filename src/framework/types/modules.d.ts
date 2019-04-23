@@ -22,3 +22,29 @@ declare module 'cron' {
         constructor(time: string | Date);
     }
 }
+
+declare module 'html-entities' {
+    // const entities = require("html-entities").AllHtmlEntities;
+
+    class AllHtmlEntities {
+        /**
+         * Encodes the given string and escapes only HTML characters.
+         */
+        public static encode(text: string): string;
+
+        /**
+         * Encodes the given string and escapes all non-UTF characters.
+         */
+        public static encodeNonUTF(text: string): string;
+
+        /**
+         * Encodes the given string and escapes all non-ASCII characters.
+         */
+        public static encodeNonASCII(text: string): string;
+
+        /**
+         * Decodes the string and returns the raw text.
+         */
+        public static decode(text: string): string;
+    }
+}

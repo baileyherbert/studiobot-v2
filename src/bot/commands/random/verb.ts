@@ -10,12 +10,10 @@ export class Verb extends Command {
         });
     }
 
-    //TODO: Allow users/admins to enter custom quotes
-
-    execute(input: Input) {
+    async execute(input: Input) {
         let rnd = Math.floor(Math.random() * verbs.length);
 
-        input.channel.send({
+        await input.channel.send({
             embed:
             {
                 color: 3447003,

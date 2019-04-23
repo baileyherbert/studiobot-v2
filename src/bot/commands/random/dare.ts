@@ -1,4 +1,4 @@
-import {Command, Input} from '@api';
+import { Command, Input } from '@api';
 
 const dare = readPublicFile('random/Dare.txt').split(/\r?\n/);
 
@@ -14,6 +14,13 @@ export class dareClass extends Command {
         let index = _.random(0, dare.length - 1);
         let line = dare[index];
 
-        await input.channel.send('```\n' + line + '\n```');
+        await input.channel.send({
+            embed:
+            {
+                color: 3447003,
+                title: `**Dare** (#${1 + index})`,
+                description: line
+            }
+        });
     }
 }

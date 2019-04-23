@@ -10,12 +10,10 @@ export class Noun extends Command {
         });
     }
 
-    //TODO: Allow users/admins to enter custom nouns
-
-    execute(input: Input) {
+    async execute(input: Input) {
         let rnd = Math.floor(Math.random() * nouns.length);
 
-        input.channel.send({
+        await input.channel.send({
             embed:
             {
                 color: 3447003,

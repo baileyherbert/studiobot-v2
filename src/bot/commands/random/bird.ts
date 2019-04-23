@@ -1,8 +1,6 @@
-import { Command, Input, Listener } from '@api';
-import { Message } from 'discord.js';
+import { Command, Input } from '@api';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Emoji } from '@bot/libraries/emoji';
 
 export class Bird extends Command {
     constructor() {
@@ -14,13 +12,10 @@ export class Bird extends Command {
     }
 
     async execute(input: Input) {
-        let message = await input.channel.send(`${Emoji.LOADING}  Fetching image...`) as Message;
-
         let dirPath = pub('/images/birds/');
         let files = fs.readdirSync(dirPath);
         let buffer = fs.readFileSync(path.join(dirPath, _.sample(files)!));
 
-        message.deleteAfter(0);
         await input.channel.send({ file: buffer });
     };
 }

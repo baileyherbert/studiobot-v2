@@ -1,5 +1,5 @@
 import { Command, Input } from '@api';
-import { Emoji } from '@bot/libraries/emoji';
+import { Emoji } from '@libraries/emoji';
 
 export class Between extends Command {
     constructor() {
@@ -35,16 +35,16 @@ export class Between extends Command {
         });
     }
 
-    execute(input: Input) {
+    async execute(input: Input) {
         let x = input.getArgument('x') as number;
         let y = input.getArgument('y') as number;
 
         if (x > y) {
-            input.channel.send(Emoji.ERROR + " `x` cannot be greater than `y`: `between <x> <y>`");
+            await input.channel.send(Emoji.ERROR + " `x` cannot be greater than `y`: `between <x> <y>`");
         }
         else {
             let rnd = Math.floor((Math.random() * y) + x);
-            input.channel.send(rnd);
+            await input.channel.send(rnd);
         }
     }
 }

@@ -4,22 +4,23 @@ export class Roll extends Command {
     constructor() {
         super({
             name: 'roll',
-            description: 'Rolls one or more dice and returns the result.',
+            description: 'Rolls a six-sided dice.',
             arguments: [
                 {
-                    name: 'dice',
-                    description: 'The number of dice to roll.',
+                    name: 'sides',
+                    description: 'The number of sides to roll.',
                     constraint: 'number',
-                    default: 1,
-                    eval: (input: number) => input >= 1 && input <= 10
+                    default: 6,
+                    eval: (input: number) => input >= 3 && input <= 1000
                 }
             ]
         });
     }
 
-    execute(input: Input) {
-        let dice = input.getArgument('dice') as number;
+    async execute(input: Input) {
+        let sides = input.getArgument('sides') as number;
+        let roll = _.random(1, sides);
 
-        input.channel.send('Not yet implemented.');
+        await input.channel.send(`:game_die:  Rolled **${roll}**.`);
     }
 }

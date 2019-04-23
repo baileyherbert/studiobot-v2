@@ -11,15 +11,11 @@ export class Lenny extends Command {
     }
 
     async execute(input: Input) {
-
         if (_.random(1,5) == 5) {
             await input.channel.send("( ͡° ͜ʖ ͡°)");
             return;
         }
 
-        let rnd = Math.floor(Math.random() * lenny.length);
-
-        input.channel.send(lenny[rnd]);
-
+        await input.channel.send(_.sample(lenny));
     }
 }

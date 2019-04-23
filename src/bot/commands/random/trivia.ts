@@ -1,4 +1,4 @@
-import { Command, Input, Listener } from '@api';
+import { Command, Input } from '@api';
 import * as request from 'request';
 import { Response } from 'request';
 import { Message } from 'discord.js';
@@ -6,24 +6,10 @@ import { Emoji } from '@bot/libraries/emoji';
 import { Reactions } from '@bot/libraries/reactions';
 import { Framework } from '@core/framework';
 import { Timer } from '@bot/libraries/utilities/timer';
-import { ReactionListener } from '@bot/listeners/reactions';
-import { listeners } from 'cluster';
 import { GuildMember } from 'discord.js';
 import { Economy } from "@libraries/economy";
-import { debug } from 'util';
 import { TextChannel } from 'discord.js';
-const entities = require("html-entities").AllHtmlEntities;
-
-//TODO: Make the trivia questions run on a loop that waits for player(s) to answer.
-//TODO: Add Stop command for admins
-//TODO: Better Error handling
-
-//---------[Require Framework Support]---------
-//TODO: Display amount of questions in each category
-
-//------------------[Maybe]--------------------
-//TODO: Add Trivia join command.
-//TODO: Add Amount command
+import { AllHtmlEntities as entities } from 'html-entities';
 
 const triviaCategories: string[] = [
     'All',
@@ -94,26 +80,7 @@ export class Trivia extends Command {
         });
     }
 
-    //Get the amount of questions in each category and difficulty
-    // async init() {
-    //     for (let i = 1; i < triviaCategories.length; i++) {
-    //         let URL = 'https://opentdb.com/api_count.php?category=' + (i + 8).toString();
-    //         let c = await parseResponse<QuestionCount>(URL);
-    //         let easy = c.category_question_count.total_easy_question_count;
-    //         let medium = c.category_question_count.total_medium_question_count;
-    //         let hard = c.category_question_count.total_hard_question_count;
-    //         //console.log(i + 8);
-    //         //console.log(`id: ${c.category_id}`);
-    //         //console.log("link: " + c);
-    //         //console.log("questioncount: " + c.category_question_count.total_easy_question_count);
-    //         triviaCategories[i] + ' - Easy:' + easy + ' - Medium:' + medium + ' - Hard:' + hard;
-
-    //         //let c = await parseResponse('https://opentdb.com/api_count.php?category=' + (i + 8).toString() );
-    //     }
-    // }
-
     async execute(input: Input) {
-
         let category = input.getArgument('category');
         let difficulty = input.getArgument('difficulty');
         let type = input.getArgument('type');

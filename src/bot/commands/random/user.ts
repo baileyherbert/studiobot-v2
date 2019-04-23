@@ -1,8 +1,8 @@
 import { Command, Input } from '@api';
 import { Role } from 'discord.js';
 
-
 let callLimit = 10;
+
 export class User extends Command {
     constructor() {
         super({
@@ -34,8 +34,7 @@ export class User extends Command {
         });
     }
 
-    execute(input: Input) {
-
+    async execute(input: Input) {
         let role = input.getArgument('role') as Role | undefined;
         let amount = input.getArgument('amount') as number;
 
@@ -44,20 +43,19 @@ export class User extends Command {
             if (amount > role.members.size) {
                 amount = role.members.size
             }
-            console.log('amount:' + amount);
+
             let members = role.members.random(amount);
-            input.channel.send(members.join(', '));
+            await input.channel.send(members.join(', '));
         }
-        //Handle invalid input
+
+        //Otherwise pick from all users in the guild
         else {
             if (amount > input.guild.memberCount) {
                 amount = input.guild.memberCount;
             }
             if (amount) {
-
                 let members = input.guild.members.random(amount);
-                console.log("guild.memberCount: " + amount);
-                input.channel.send(members.join(', '));
+                await input.channel.send(members.join(', '));
             }
         }
     }
