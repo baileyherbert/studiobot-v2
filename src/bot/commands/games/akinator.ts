@@ -1,6 +1,7 @@
 import { Command, Input } from '@api';
 import { Message } from 'discord.js';
 import { Akinator } from '@libraries/akinator';
+import { Emoji } from '@bot/libraries/emoji';
 
 let images: string[] = [
     'https://en.akinator.com/bundles/elokencesite/images/akitudes_670x1096/defi.png?v90',
@@ -15,6 +16,8 @@ let images: string[] = [
 ]
 
 export class AkinatorGame extends Command {
+    protected reservations: Reservations = {};
+
     constructor() {
         super({
             name: 'akinator',
@@ -24,7 +27,13 @@ export class AkinatorGame extends Command {
     }
 
     async execute(input: Input) {
+        if (!(input.channel.id in this.reservations)) this.reservations[input.channel.id] = {};
+        if (input.member.id in this.reservations[input.channel.id]) {
+            this.reservations[input.channel.id][input.member.id].stop();
+        }
+
         let akinator = new Akinator('en');
+        this.reservations[input.channel.id][input.member.id] = akinator;
 
         // Start the session
         let step = await akinator.start();
@@ -50,9 +59,17 @@ export class AkinatorGame extends Command {
             let reaction = await this.getResponse(input);
             this.getLogger().debug(`Session ${step.session.sessionId}: Answered ${reaction}`);
 
+            // Stop if the game has ended
+            if (akinator.isEnded()) return;
+
             // Go back to the previous step
             if (reaction == 5) {
-                if (step.number == 1) break;
+                if (step.number == 1) {
+                    delete this.reservations[input.channel.id][input.member.id];
+                    await input.channel.send(`${Emoji.SUCCESS}  Akinator game exited.`);
+                    break;
+                }
+
                 step = await akinator.previous();
             }
 
@@ -89,6 +106,7 @@ export class AkinatorGame extends Command {
                 }) as Message;
 
                 // Exit the loop
+                delete this.reservations[input.channel.id][input.member.id];
                 break;
             }
 
@@ -127,3 +145,11 @@ export class AkinatorGame extends Command {
         });
     }
 }
+
+type Reservations = {
+    [channelId: string]: Reservation;
+};
+
+type Reservation = {
+    [userId: string]: Akinator;
+};

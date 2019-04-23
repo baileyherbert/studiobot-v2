@@ -8,6 +8,8 @@ export class Akinator {
     private question?: string;
     private step?: number;
 
+    private ended: boolean = false;
+
     /**
      * Constructs a new Akinator session instance.
      */
@@ -40,6 +42,13 @@ export class Akinator {
 
         // Return the step
         return this.getStep();
+    }
+
+    /**
+     * Stops the game.
+     */
+    public stop() {
+        this.ended = true;
     }
 
     /**
@@ -136,6 +145,13 @@ export class Akinator {
             question: this.question!,
             session: this.session!
         };
+    }
+
+    /**
+     * Returns `true` if the game is stopped.
+     */
+    public isEnded(): boolean {
+        return this.ended;
     }
 
     /**
