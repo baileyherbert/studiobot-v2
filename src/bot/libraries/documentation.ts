@@ -51,6 +51,10 @@ export class Documentation {
      * Returns the command's usage as a string in inline format, which can be surrounded with backticks for formatting.
      */
     public static getInlineUsage(command: Command) {
+        if (command.getCustomUsage()) {
+            return command.getCustomUsage()!;
+        }
+
         let usage = command.getName();
         let args : string[] = [];
 
