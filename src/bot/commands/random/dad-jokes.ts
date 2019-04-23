@@ -1,11 +1,6 @@
-import { Command, Input, Listener } from '@api';
-import * as request from 'request';
-import { Message } from 'discord.js';
-import { Emoji } from '@bot/libraries/emoji';
-import { Url } from 'url';
-import { monitorEventLoopDelay } from 'perf_hooks';
-import { CookieJar } from 'tough-cookie';
-const entities = require("html-entities").AllHtmlEntities;
+import { Command, Input } from '@api';
+
+const jokes = readPublicFile('random/dad-jokes.txt').split(/\r?\n/);
 
 export class DadJokes extends Command {
     constructor() {
@@ -17,44 +12,15 @@ export class DadJokes extends Command {
     }
 
     async execute(input: Input) {
-        let url = `https://icanhazdadjoke.com/`;
+        let rnd = Math.floor(Math.random() * jokes.length);
 
-        let message = await input.channel.send(`${Emoji.LOADING}  Fetching joke...`) as Message;
-        let headers = {
-            'Accept': 'application/json',
-            'User-Agent': 'Ember bot'
-        }
-
-        //Fetch from API
-        request({url, headers}, async (err, response, body) => {
-            // Handle HTTP errors
-            if (err) {
-                this.getLogger().error(err);
-                await message.edit(`${Emoji.ERROR}  Failed to get dad joke, try again later.`);
-                return;
+        await input.channel.send({
+            embed:
+            {
+                color: 3447003,
+                title: `**Dad Joke** (#${1 + rnd})`,
+                description: jokes[rnd]
             }
-
-            // Parse the body
-            let parsed = (<ApiResponse>JSON.parse(body));
-
-            // Delete the message if it can be deleted
-            message.deleteAfter(0);
-
-            // Send joke
-            await input.channel.send({
-                embed: {
-                    color: 3447003,
-                    title: `Dad Joke` ,
-                    description: parsed.joke
-                }
-            });
         });
     }
 }
-
-type ApiResponse = {
-    id: string;
-    joke: string;
-    status: number;
-
-};
