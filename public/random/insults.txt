@@ -1,4 +1,4 @@
- Insults:
+# Insults
  don’t feel bad, there are many people who have no talent!
  as an outsider, what do you think of the human race?
  I’d like to kick you in the teeth, but why should I improve your looks?
@@ -31,4 +31,3 @@
  I can’t seem to remember your name, and please don’t help me.
  I’ve seen people like you but I had to pay admission.
  do you practise being this ugly?
- Fuck You!
