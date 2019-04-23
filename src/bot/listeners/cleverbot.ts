@@ -10,6 +10,7 @@ export class CleverbotListener extends Listener
 
     onMessage(message: Message) {
         if (message.channel.type != 'text') return;
+        if (message.member.user.bot) return;
 
         let myId = Framework.getClient().user.id;
         let exp = new RegExp('^<@!?' + myId + '>\\s+(.+)$');
