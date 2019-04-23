@@ -1,7 +1,6 @@
-import { Command, Input, Listener } from '@api';
+import { Command, Input } from '@api';
 import * as request from 'request';
 import { Emoji } from '@bot/libraries/emoji';
-import { Message } from 'discord.js';
 import { RichEmbed } from 'discord.js';
 
 export class UrbanDictionary extends Command {

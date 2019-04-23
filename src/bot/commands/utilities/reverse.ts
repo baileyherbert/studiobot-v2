@@ -1,4 +1,4 @@
-import { Command, Input, Listener } from '@api';
+import { Command, Input } from '@api';
 
 export class Reverse extends Command {
     constructor() {
@@ -15,11 +15,11 @@ export class Reverse extends Command {
             ]
         });
     }
-    
+
     async execute(input : Input){
         let text = input.getArgument('text') as string;
         let reversed = text.split('').reverse().join('');
 
-        input.channel.send(reversed)
+        await input.channel.send(reversed);
     }
 }
