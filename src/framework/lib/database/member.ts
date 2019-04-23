@@ -108,7 +108,9 @@ export class MemberBucket {
                 query.set(this.map[column], value);
             }
 
-            await Database.run(query.toString());
+            let compiled = query.toParam();
+            await Database.run(compiled.text, compiled.values);
+
         }
 
         // Insert a new row
@@ -130,7 +132,8 @@ export class MemberBucket {
                 query.set(this.map[column], value);
             }
 
-            await Database.run(query.toString());
+            let compiled = query.toParam();
+            await Database.run(compiled.text, compiled.values);
             this.rowExists = true;
         }
     }
@@ -147,7 +150,7 @@ export class MemberBucket {
         this.status.loading = true;
 
         // Get the database row
-        let rows = await Database.query<any[]>('SELECT * FROM members WHERE id = ? AND guild_id = ? LIMIT 1', this.id, this.guildId);
+        let rows = await Database.query<any[]>('SELECT * FROM members WHERE id = ? AND guild_id = ? LIMIT 1', [this.id, this.guildId]);
         let row = (rows.length > 0) ? rows[0] : undefined;
 
         // If the row exists, parse its data

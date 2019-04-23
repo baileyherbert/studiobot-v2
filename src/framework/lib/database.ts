@@ -11,7 +11,7 @@ export class Database {
     /**
      * Runs the given query and returns information about the query.
      */
-    public static run(query: string, ...bindings: any[]) : Promise<Transaction> {
+    public static run(query: string, bindings: any[] = []) : Promise<Transaction> {
         return new Promise((resolve, reject) => {
             queue.push((cb : () => void) => {
                 this.connection.query(query, bindings, (err, results) => {
@@ -31,7 +31,7 @@ export class Database {
     /**
      * Runs the given query and resolves with an array of all matched rows.
      */
-    public static query<T = any>(query: string, ...bindings: any[]) : Promise<T> {
+    public static query<T = any>(query: string, bindings: any[] = []) : Promise<T> {
         return new Promise((resolve, reject) => {
             queue.push((cb : () => void) => {
                 this.connection.query(query, bindings, (err, results) => {
