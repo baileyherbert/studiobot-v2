@@ -1,6 +1,7 @@
 import { Command, Input } from '@api';
-import * as fs from 'fs';
-import * as path from 'path';
+import { ImagePack } from '@libraries/image-pack';
+
+const pack = new ImagePack('birds');
 
 export class Bird extends Command {
     constructor() {
@@ -11,12 +12,16 @@ export class Bird extends Command {
         });
     }
 
-    async execute(input: Input) {
-        let dirPath = pub('/images/birds/');
-        let files = fs.readdirSync(dirPath);
-        let buffer = fs.readFileSync(path.join(dirPath, _.sample(files)!));
+    async init() {
+        if (!pack.isInstalled()) {
+            pack.install();
+        }
+    }
 
-        await input.channel.send({ file: buffer });
+    async execute(input: Input) {
+        await input.channel.send('', {
+            files: [pack.getRandomBuffer()]
+        });
     };
 }
 

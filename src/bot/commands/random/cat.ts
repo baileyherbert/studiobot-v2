@@ -1,5 +1,7 @@
 import { Command, Input } from '@api';
-import * as request from 'request';
+import { ImagePack } from '@libraries/image-pack';
+
+const pack = new ImagePack('cats');
 
 export class cat extends Command {
     constructor() {
@@ -10,21 +12,15 @@ export class cat extends Command {
         });
     }
 
+    async init() {
+        if (!pack.isInstalled()) {
+            pack.install();
+        }
+    }
+
     async execute(input: Input) {
-        let url = 'https://api.thecatapi.com/v1/images/search';
-
-        request(url, async (err, response, body) => {
-            if (err) return;
-
-            await input.channel.send({
-                embed: {
-                    color: 3447003,
-                    image:
-                    {
-                        url: (<ApiResponse>JSON.parse(body))[0].url
-                    }
-                }
-            });
+        await input.channel.send('', {
+            files: [pack.getRandomBuffer()]
         });
     }
 }
