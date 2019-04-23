@@ -4,13 +4,33 @@ import { Documentation } from '@bot/libraries/documentation';
 import { Util, RichEmbed } from 'discord.js';
 
 export let Sections : HelpSections = {
-    'Basic': [ 'help', 'ping', 'uptime', 'changelog', 'invite' ],
-    'Admin': [ 'prefix', 'clear', 'spam' ],
-    'Economy': [ 'balance', 'daily', 'pay', 'richest', 'inventory' ],
-    'Games': [ 'game', 'madlib', 'spin', 'race', 'hangman' ],
-    'Social': [ 'level', 'rank', 'leaderboard', 'mock', 'rip', 'quote', 'breakice' ],
-    'Utilities': [ 'music', 'weather', 'forecast', 'poll', 'avatar', 'nicknames', 'lastfm', 'flip', 'countdown', 'distance', 'color', 'youtube' ],
-    'Random': [ 'between', 'csv', '8ball', 'poem', 'pun', 'roll', 'trivia', 'user', 'inspire', 'noun', 'verb', 'adjective', 'adverb', 'twister', 'coinflip', 'fortune', 'dog', 'cat', 'yomomma', 'joke', 'ascii', 'lenny' ]
+    'Basic': [
+        'help', 'ping', 'uptime', 'changelog', 'invite'
+    ],
+    'Admin': [
+        'prefix', 'clear', 'spam'
+    ],
+    'Economy': [
+        'balance', 'daily', 'pay', 'richest', 'inventory'
+    ],
+    'Games': [
+        'game', 'madlib', 'spin', 'race', 'hangman', 'slots', 'akinator'
+    ],
+    'Social': [
+        'level', 'rank', 'leaderboard', 'mock', 'rip', 'quote', 'breakice',
+        'insult'
+    ],
+    'Utilities': [
+        'music', 'weather', 'forecast', 'poll', 'avatar', 'nicknames', 'lastfm',
+        'flip', 'countdown', 'distance', 'color', 'youtube', 'reverse',
+        'pokedex', 'dictionary', 'urban'
+    ],
+    'Random': [
+        'between', 'csv', '8ball', 'poem', 'pun', 'roll', 'trivia', 'user',
+        'inspire', 'noun', 'verb', 'adjective', 'adverb', 'twister', 'coinflip',
+        'fortune', 'dog', 'cat', 'yomomma', 'joke', 'ascii', 'lenny' , 'bird',
+        'catfact', 'dadjoke',
+    ]
 };
 
 export class Help extends Command {
