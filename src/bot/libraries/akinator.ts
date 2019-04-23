@@ -49,27 +49,7 @@ export class Akinator {
         if (!this.session) throw new Error('Akinator: Cannot proceed to next step because the game has not been started.');
         if (this.winner) throw new Error('Akinator: Cannot proceed to next step because the game has been finished.');
 
-        // Get the response
-        let json = await request({
-            method: 'GET',
-            uri: `https://${this.getRequestUrl()}/ws/answer?callback=&session=${this.session.sessionId}&signature=${this.session.sessionSignature}&step=${this.step}&answer=${answer}&question_filter=`,
-            headers: this.getHeaders(),
-            gzip: true,
-            json: true
-        }) as AnswerResponse;
-
-        // Check the completion property
-        if (json.completion != 'OK') {
-            throw new Error(`Akinator: Cannot continue due to an unexpected error: ${json.completion}`);
-        }
-
-        // Update local variables
-        this.question = json.parameters.question;
-        this.step = parseInt(json.parameters.step);
-        this.certainty = parseFloat(json.parameters.progression);
-
-        // Return the step
-        return this.getStep();
+        return await this.progress(answer);
     }
 
     /**
@@ -79,10 +59,19 @@ export class Akinator {
         if (!this.session) throw new Error('Akinator: Cannot move to previous step because the game has not been started.');
         if (this.winner) throw new Error('Akinator: Cannot move to previous step because the game has been finished.');
 
+        return await this.progress(-1, true);
+    }
+
+    /**
+     * Steps akinator to the next or previous question.
+     */
+    protected async progress(answer: number, back: boolean = false): Promise<Step> {
+        let endpoint = back ? 'cancel_answer' : 'answer';
+
         // Get the response
         let json = await request({
             method: 'GET',
-            uri: `https://${this.getRequestUrl()}/ws/cancel_answer?callback=&session=${this.session.sessionId}&signature=${this.session.sessionSignature}&step=${this.step}&answer=-1&question_filter=`,
+            uri: `https://${this.getRequestUrl()}/ws/${endpoint}?callback=&session=${this.session!.sessionId}&signature=${this.session!.sessionSignature}&step=${this.step}&answer=${answer}&question_filter=`,
             headers: this.getHeaders(),
             gzip: true,
             json: true
@@ -90,7 +79,7 @@ export class Akinator {
 
         // Check the completion property
         if (json.completion != 'OK') {
-            throw new Error(`Akinator: Cannot go back due to an unexpected error: ${json.completion}`);
+            throw new Error(`Akinator: Request had an unexpected error: ${json.completion}`);
         }
 
         // Update local variables
