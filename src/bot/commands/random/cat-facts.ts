@@ -1,8 +1,6 @@
-import { Command, Input, Listener } from '@api';
-import * as request from 'request';
-import { Message } from 'discord.js';
-import { Emoji } from '@bot/libraries/emoji';
-const entities = require("html-entities").AllHtmlEntities;
+import { Command, Input } from '@api';
+
+const facts = readPublicFile('random/cat-facts.txt').split(/\r?\n/);
 
 export class CatFacts extends Command {
     constructor() {
@@ -14,35 +12,15 @@ export class CatFacts extends Command {
     }
 
     async execute(input: Input) {
-        let url = 'https://catfact.ninja/fact?max_length=2000';
-        let message = await input.channel.send(`${Emoji.LOADING}  Fetching fact...`) as Message;
+        let rnd = Math.floor(Math.random() * facts.length);
 
-        //Fetch from API
-        request(url, async (err, response, body) => {
-            //Handle HTTP errors
-            if (err) {
-                await message.edit(`${Emoji.ERROR}  Failed to get fact, try again later.`);
-                return;
+        await input.channel.send({
+            embed:
+            {
+                color: 3447003,
+                title: `**Cat Fact** (#${1 + rnd})`,
+                description: facts[rnd]
             }
-
-            //Parse the body
-            let parsed = (<ApiResponse>JSON.parse(body));
-
-            // Delete the loading message
-            message.deleteAfter(0);
-
-            await input.channel.send({
-                embed: {
-                    color: 3447003,
-                    title: 'Cat Fact',
-                    description: parsed.fact
-                }
-            });
         });
     }
 }
-
-type ApiResponse = {
-    fact: string,
-    length: number;
-};
