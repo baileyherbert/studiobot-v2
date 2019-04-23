@@ -22,10 +22,14 @@ export class Mock extends Command {
         let lastMessage = user.lastMessage;
 
         if (user == input.member) {
-            return await input.channel.send(`${Emoji.ERROR} You can't mock yourself!`);
+            return await input.channel.send(`${Emoji.ERROR}  You can't mock yourself!`);
         }
 
-        if (lastMessage && lastMessage.content.charAt(0) != input.guild.settings.prefix) {
+        if (user.user.bot) {
+            return await input.channel.send(`${Emoji.ERROR}  You can't mock a bot!`);
+        }
+
+        if (lastMessage && lastMessage.content.charAt(0) != input.guild.settings.prefix && lastMessage.content.length > 0) {
             let lastMessageText = lastMessage.content;
             let changed = "";
 
@@ -45,7 +49,7 @@ export class Mock extends Command {
             await input.channel.send(changed);
         }
         else {
-            return await input.channel.send(`${Emoji.ERROR} Can't find a message to mock!`);
+            return await input.channel.send(`${Emoji.ERROR}  Can't find a message to mock!`);
         }
     }
 }
