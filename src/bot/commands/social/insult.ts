@@ -14,7 +14,10 @@ export class Insult extends Command {
                     name: 'user',
                     description: 'The scumbag to insult!!!!',
                     constraint: 'mention',
-                    required: true
+                    required: true,
+                    eval: (value: GuildMember) => {
+                        return !value.user.bot;
+                    }
                 }
             ]
         });
