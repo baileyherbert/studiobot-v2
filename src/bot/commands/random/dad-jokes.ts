@@ -1,6 +1,6 @@
 import { Command, Input } from '@api';
 
-const jokes = readPublicFile('random/dad-jokes.txt').split(/\r?\n/);
+const jokes = readPublicFile('random/dad-jokes.txt').split(/\r?\n\r?\n/);
 
 export class DadJokes extends Command {
     constructor() {
