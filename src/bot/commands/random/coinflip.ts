@@ -4,7 +4,7 @@ export class Conflip extends Command {
     constructor() {
         super({
             name: 'coinflip',
-            aliases: ['flip', 'coin'],
+            aliases: ['coin'],
             description: 'Throws a coin that will land on either heads or tails.'
         });
     }

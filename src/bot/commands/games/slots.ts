@@ -6,6 +6,7 @@ export class Ping extends Command {
     constructor() {
         super({
             name: 'slot',
+            aliases: ['slots'],
             description: 'Creates a slot machine game for the users.'
         });
     }
@@ -24,7 +25,7 @@ export class Ping extends Command {
                 .setFooter("Comgrats, You've Won!")
                 .setTitle(':slot_machine: SLOT MACHINE :slot_machine:')
                 .addField('Result!', emojis[slot1] + emojis[slot2] + emojis[slot3]);
-                
+
             await input.channel.send(wEmbed);
 
             //needs to give use an amount if they win
@@ -32,7 +33,7 @@ export class Ping extends Command {
             await input.channel.send(`:moneybag:  ${input.member} received **$${50}**.`);
         }
 
-        //if not then output you've lost 
+        //if not then output you've lost
         else{
             let wEmbed = new RichEmbed()
                 .setFooter("You've Lost, Try again?")
