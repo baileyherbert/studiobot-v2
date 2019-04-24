@@ -1,13 +1,14 @@
-import { Database } from "../database";
-import * as squel from 'squel';
+import { Model } from './model';
 
-export class MemberBucket {
-    protected id: string;
-    protected guildId: string;
-    protected rowExists: boolean = false;
-    protected status: Status;
-    protected map : {[column: string]: string} = {
-        guildId: 'guild_id',
+export class MemberBucket extends Model {
+    protected table = 'members';
+
+    protected primaryKey = {
+        id: 'id',
+        guildId: 'guild_id'
+    };
+
+    protected map = {
         currency: 'currency',
         inventory: 'inventory',
         level: 'level',
@@ -64,124 +65,11 @@ export class MemberBucket {
      */
     public birthYear?: number;
 
-    constructor(id: string, guildId: string) {
-        let r : Function = () => {};
-        let p : Promise<void> = new Promise(resolve => {
-            r = resolve;
-        });
-
-        this.id = id;
-        this.guildId = guildId;
-        this.status = {
-            loaded: false,
-            loading: false,
-            promise: p,
-            resolver: r
-        };
-    }
-
     /**
-     * Saves the current state of the guild.
+     * Constructs a new member.
      */
-    public async save(): Promise<void> {
-        // Throw an error if we haven't already loaded
-        if (!this.status.loaded) {
-            throw new Error('Attempted to save a MemberBucket which has not been loaded.');
-        }
-
-        // Update an existing row
-        if (this.rowExists) {
-            let query = squel.update()
-                .table('members', 'm')
-                .where('m.id = ?', this.id)
-                .where('m.guild_id = ?', this.guildId);
-
-            // Add columns
-            for (let column in this.map) {
-                let value = (this as any)[column] as any;
-
-                // Convert values
-                if (typeof value == 'object') value = 'json:' + JSON.stringify(value);
-                if (typeof value == 'undefined') value = null;
-
-                // Insert value
-                query.set(this.map[column], value);
-            }
-
-            let compiled = query.toParam();
-            await Database.run(compiled.text, compiled.values);
-
-        }
-
-        // Insert a new row
-        else {
-            let query = squel.insert()
-                .into('members')
-                .set('id', this.id)
-                .set('guild_id', this.guildId);
-
-            // Add columns
-            for (let column in this.map) {
-                let value = (this as any)[column] as any;
-
-                // Convert values
-                if (typeof value == 'object') value = 'json:' + JSON.stringify(value);
-                if (typeof value == 'undefined') value = null;
-
-                // Insert value
-                query.set(this.map[column], value);
-            }
-
-            let compiled = query.toParam();
-            await Database.run(compiled.text, compiled.values);
-            this.rowExists = true;
-        }
-    }
-
-    /**
-     * Loads the guild's data from the database.
-     */
-    public async load(): Promise<void> {
-        // Skip if already loaded
-        if (this.status.loaded) return;
-        if (this.status.loading) return await this.status.promise;
-
-        // Start loading
-        this.status.loading = true;
-
-        // Get the database row
-        let rows = await Database.query<any[]>('SELECT * FROM members WHERE id = ? AND guild_id = ? LIMIT 1', [this.id, this.guildId]);
-        let row = (rows.length > 0) ? rows[0] : undefined;
-
-        // If the row exists, parse its data
-        if (row) {
-            this.rowExists = true;
-
-            for (let column in this.map) {
-                let realName = this.map[column];
-                let value = row[realName];
-
-                // Decode value
-                if (value == null) value = undefined;
-                if (typeof value == 'string' && value.startsWith('json:')) value = JSON.parse(value.substring(5));
-
-                // Restore the value
-                (this as any)[column] = value;
-            }
-        }
-
-        // Set the status and resolve the loading promise
-        this.status.loaded = true;
-        this.status.resolver();
-    }
-
-    /**
-     * Waits for the member to finish loading.
-     */
-    public async wait() {
-        if (!this.status.loaded) {
-            await this.status.promise;
-        }
+    constructor(protected id: string, protected guildId: string) {
+        super();
     }
 }
 
@@ -201,9 +89,3 @@ export type MemberRow = {
     settings?: string;
 }
 
-type Status = {
-    loaded: boolean;
-    loading: boolean;
-    promise: Promise<void>;
-    resolver: Function;
-}
