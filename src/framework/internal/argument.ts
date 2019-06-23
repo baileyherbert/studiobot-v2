@@ -77,7 +77,7 @@ export class Argument {
      */
     private getRegularExpressions() : RegExp[] {
         if (this.options.options) return [this.getOptionsExpression() as RegExp];
-        if (this.options.patterns) return this.getPatterns();
+        if (this.options.patterns || this.options.pattern) return this.getPatterns();
         if (this.options.constraint) return _.values(this.getConstraintExpressions());
 
         return [/("[^"]+"|[^\s"]+)/];
@@ -123,13 +123,18 @@ export class Argument {
     public getUsage() : string {
         let components : string[] = [];
         let options = this.getOptions();
+
+        if (this.options.usage) {
+            return this.options.usage;
+        }
+
         components.push(this.getRequired() ? '<' : '[');
 
         if (options && options.length < 5) components.push((<string[]> this.getOptions()).join('|'));
         else if (_.isEqual(this.getConstraints(), ['mention'])) components.push('@' + this.getName());
         else components.push(this.getName());
 
-        if (this.getDefaultValue() != undefined) {
+        if (this.getDefaultValue() != undefined && this.getDefaultValue() != '') {
             let d = '' + this.getDefaultValue();
             if (d == '@mention' || d == '@member') d = 'you';
             components.push(' = ' + d);

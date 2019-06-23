@@ -138,6 +138,13 @@ export abstract class Command {
     public getUsage() : string {
         return Documentation.getInlineUsage(this);
     }
+
+    /**
+     * Returns any custom usage configured by the command.
+     */
+    public getCustomUsage() : string | undefined {
+        return this.options.usage;
+    }
 }
 
 export type CommandOptions = {
@@ -165,6 +172,11 @@ export type CommandOptions = {
      * The permission required for a user to run this command.
      */
     permission?: PermissionResolvable;
+
+    /**
+     * A string showing how to use the command.
+     */
+    usage?: string;
 };
 
 type PermissionResolvable = 'createInstantInvite' | 'kickMembers' | 'banMembers' | 'administrator' | 'manageChannels' | 'manageGuild' |

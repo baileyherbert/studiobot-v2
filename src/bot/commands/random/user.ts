@@ -1,8 +1,8 @@
 import { Command, Input } from '@api';
 import { Role } from 'discord.js';
 
-
 let callLimit = 10;
+
 export class User extends Command {
     constructor() {
         super({
@@ -34,30 +34,34 @@ export class User extends Command {
         });
     }
 
-    execute(input: Input) {
-
+    async execute(input: Input) {
         let role = input.getArgument('role') as Role | undefined;
         let amount = input.getArgument('amount') as number;
+        let names : string[] = [];
 
         //If role is set find all users in that role
         if (role && amount > 0) {
             if (amount > role.members.size) {
-                amount = role.members.size
+                amount = role.members.size;
             }
-            console.log('amount:' + amount);
-            let members = role.members.random(amount);
-            input.channel.send(members.join(', '));
+
+            let members = role.members.filter(m => !m.user.bot).random(amount);
+            members.forEach(m => names.push(m.displayName));
+
+            await input.channel.send(names.join(', '));
         }
-        //Handle invalid input
+
+        //Otherwise pick from all users in the guild
         else {
             if (amount > input.guild.memberCount) {
                 amount = input.guild.memberCount;
             }
-            if (amount) {
 
-                let members = input.guild.members.random(amount);
-                console.log("guild.memberCount: " + amount);
-                input.channel.send(members.join(', '));
+            if (amount) {
+                let members = input.guild.members.filter(m => !m.user.bot).random(amount);
+                members.forEach(m => names.push(m.displayName));
+
+                await input.channel.send(names.join(', '));
             }
         }
     }

@@ -9,6 +9,9 @@ export class CleverbotListener extends Listener
 {
 
     onMessage(message: Message) {
+        if (message.channel.type != 'text') return;
+        if (message.member.user.bot) return;
+
         let myId = Framework.getClient().user.id;
         let exp = new RegExp('^<@!?' + myId + '>\\s+(.+)$');
         let matches = exp.exec(message.content);
@@ -40,8 +43,12 @@ export class CleverbotListener extends Listener
                 }
 
                 setTimeout(() => {
+                    if (response.output.trim().length == 0) {
+                        response.output = 'I have nothing to say right now.';
+                    }
+
                     message.channel.stopTyping();
-                    message.channel.send(':speech_balloon:  ' + response.output);
+                    message.channel.send(`:speech_balloon:  ${message.member} ${response.output}`);
                 }, 1000);
             });
         }

@@ -24,7 +24,7 @@ export class CSV extends Command {
         });
     }
 
-    execute(input: Input) {
+    async execute(input: Input) {
         let list = input.getArgument('list') as string;
         let amount = input.getArgument('amount') as number;
         let entries = list.split(/\s*,+\s*/);
@@ -36,7 +36,8 @@ export class CSV extends Command {
             for (let i = 0; i < amount; i++) {
                 elements[i] = entries[Math.floor(Math.random() * entries.length)];
             }
-            input.channel.send(elements.join(', '));
+
+            await input.channel.send(elements.join(', '));
         }
     }
 }

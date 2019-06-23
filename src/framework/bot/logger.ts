@@ -3,6 +3,9 @@ import chalk from 'chalk';
 import * as readline from 'readline';
 import moment = require('moment');
 
+// Get the real console.log()
+const log = console.log;
+
 export class Logger {
     private id?: string;
 
@@ -11,25 +14,25 @@ export class Logger {
     }
 
     public info(message: any, ...params: any[]) {
-        console.log.apply(console, this.build('info', message, params));
+        log.apply(console, this.build('info', message, params));
     }
 
     public debug(message: any, ...params: any[]) {
         if (Framework.getLoggingLevel() != 'verbose' && Framework.getLoggingLevel() != 'debug') return;
-        console.log.apply(console, this.build('debug', message, params));
+        log.apply(console, this.build('debug', message, params));
     }
 
     public verbose(message: any, ...params: any[]) {
         if (Framework.getLoggingLevel() != 'verbose') return;
-        console.log.apply(console, this.build('verbose', message, params));
+        log.apply(console, this.build('verbose', message, params));
     }
 
     public warning(message: any, ...params: any[]) {
-        console.log.apply(console, this.build('warning', message, params));
+        log.apply(console, this.build('warning', message, params));
     }
 
     public error(message: any, ...params: any[]) {
-        console.log.apply(console, this.build('error', message, params));
+        log.apply(console, this.build('error', message, params));
     }
 
     /**
@@ -84,3 +87,9 @@ export class Logger {
         return color(level + ':');
     }
 }
+
+// Override console.log()
+console.log = function() {
+    let logger = Framework.getLogger();
+    logger.debug.apply(logger, Array.from(arguments) as any);
+};

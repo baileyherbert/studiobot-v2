@@ -1,10 +1,24 @@
-import { Database } from "../database";
+import { Model } from './model';
 
-export class MemberBucket {
-    protected id: string;
-    protected guildId: string;
-    protected rowExists: boolean = false;
-    protected status: Status;
+export class MemberBucket extends Model {
+    protected table = 'members';
+
+    protected primaryKey = {
+        id: 'id',
+        guildId: 'guild_id'
+    };
+
+    protected map = {
+        currency: 'currency',
+        inventory: 'inventory',
+        level: 'level',
+        experience: 'experience',
+        lastExperienceAwardTime: 'exp_award_time',
+        lastDailyRedeemTime: 'redeem_time',
+        nameHistory: 'name_history',
+        lastfmId: 'lastfm_id',
+        birthYear: 'birth_year'
+    };
 
     /**
      * The balance of the member.
@@ -51,98 +65,11 @@ export class MemberBucket {
      */
     public birthYear?: number;
 
-    constructor(id: string, guildId: string) {
-        let r : Function = () => {};
-        let p : Promise<void> = new Promise(resolve => {
-            r = resolve;
-        });
-
-        this.id = id;
-        this.guildId = guildId;
-        this.status = {
-            loaded: false,
-            loading: false,
-            promise: p,
-            resolver: r
-        };
-    }
-
     /**
-     * Saves the current state of the guild.
+     * Constructs a new member.
      */
-    public async save(): Promise<void> {
-        // Throw an error if we haven't already loaded
-        if (!this.status.loaded) {
-            throw new Error('Attempted to save a MemberBucket which has not been loaded.');
-        }
-
-        // Duplicate this object
-        let o : any = _.clone(this);
-
-        // Remove functions and irrelevant variables
-        _.each(o, (val, key) => {
-            if (typeof val == 'function' || key == 'id' || key == 'rowExists' || key == 'guildId' || key == 'status') {
-                delete o[key];
-            }
-        });
-
-        // Encode with JSON
-        let json = JSON.stringify(o, null, 4);
-
-        // Does the row exist?
-        let exists = this.rowExists;
-
-        // Run the query
-        if (exists) {
-            await Database.run('UPDATE members SET settings = ? WHERE id = ? AND guild_id = ?', json, this.id, this.guildId);
-        }
-        else {
-            this.rowExists = true;
-            await Database.run('INSERT INTO members (id, guild_id, settings) VALUES (?, ?, ?)', this.id, this.guildId, json);
-        }
-    }
-
-    /**
-     * Loads the guild's data from the database.
-     */
-    public async load(): Promise<void> {
-        // Skip if already loaded
-        if (this.status.loaded) return;
-        if (this.status.loading) return await this.status.promise;
-
-        // Start loading
-        this.status.loading = true;
-
-        // Get the database row
-        let row = await Database.get<MemberRow>('SELECT * FROM members WHERE id = ? AND guild_id = ?', this.id, this.guildId);
-
-        // If the row exists, parse its data
-        if (row) {
-            this.rowExists = true;
-
-            if (row.settings) {
-                let settings = JSON.parse(row.settings);
-                let o = _.defaultsDeep(settings, this);
-
-                _.each(o, (val, key) => {
-                    if (key == 'id' || key == 'rowExists' || key == 'guildId' || key == 'status') return;
-                    (this as any)[key] = val;
-                });
-            }
-        }
-
-        // Set the status and resolve the loading promise
-        this.status.loaded = true;
-        this.status.resolver();
-    }
-
-    /**
-     * Waits for the member to finish loading.
-     */
-    public async wait() {
-        if (!this.status.loaded) {
-            await this.status.promise;
-        }
+    constructor(protected id: string, protected guildId: string) {
+        super();
     }
 }
 
@@ -162,9 +89,3 @@ export type MemberRow = {
     settings?: string;
 }
 
-type Status = {
-    loaded: boolean;
-    loading: boolean;
-    promise: Promise<void>;
-    resolver: Function;
-}

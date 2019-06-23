@@ -86,3 +86,4 @@ auth.json
 run bot.bat
 data/storage
 dist/
+public/packs

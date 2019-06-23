@@ -1,6 +1,6 @@
 import { Command, Input } from '@api';
 import { GuildMember } from 'discord.js';
-const moment = require('moment');
+import * as moment from 'moment';
 
 export class Nicknames extends Command {
     constructor() {
@@ -18,11 +18,11 @@ export class Nicknames extends Command {
         });
     }
 
-    execute(input: Input) {
+    async execute(input: Input) {
         let target = input.getArgument('user') as GuildMember;
-
         let result = '';
-        input.member.settings.nameHistory.forEach(record => {
+
+        target.settings.nameHistory.forEach(record => {
             let timeAgo = _.now() - record.time;
             let m = moment(record.time);
             let isThisYear = (m.format('YYYY') === moment().format('YYYY'));
@@ -35,17 +35,18 @@ export class Nicknames extends Command {
             result += timestamp + '\n';
         });
 
-        if (input.member.settings.nameHistory.length <= 0) {
+        if (target.settings.nameHistory.length <= 0) {
             result = "None";
         }
-        input.channel.send({
+
+        await input.channel.send({
             embed: {
                 color: 3447003,
                 author: {
                     name: target.displayName,
                     icon_url: target.user.avatarURL
                 },
-                title: "Nicknames",
+                title: `Name history`,
                 description: result
             }
         });

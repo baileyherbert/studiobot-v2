@@ -12,7 +12,10 @@ export class Balance extends Command {
                     name: 'user',
                     constraint: 'mention',
                     default: '@member',
-                    error: true
+                    error: true,
+                    eval: (input: GuildMember, args, message) => {
+                        return !input.user.bot;
+                    }
                 }
             ]
         });

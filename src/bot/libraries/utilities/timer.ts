@@ -23,9 +23,9 @@ export class Timer extends EventEmitter {
         while (this.remaining > 0) {
             await sleep(Math.min(this.tickRate, this.remaining * 1000));
             this.elapsed = (_.now() - this.startTime) / 1000;
-            this.remaining = Math.ceil(this.time - this.elapsed);
+            this.remaining = this.time - this.elapsed;
 
-            if (this.func) await this.func(this.remaining);
+            if (this.func) await this.func(Math.ceil(this.remaining));
         }
         this.emit('finished');
     }
