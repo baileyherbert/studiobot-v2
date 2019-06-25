@@ -18,7 +18,7 @@ export class CSV extends Command {
                     description: 'List of entries separated by commas.',
                     expand: true,
                     required: true,
-                    eval: (input : string) => input.indexOf(',') > 0
+                    eval: (input : string) => input.indexOf(',') > 0 && !input.endsWith(',') && !input.startsWith(',')
                 }
             ]
         });
