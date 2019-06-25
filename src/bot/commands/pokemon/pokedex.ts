@@ -12,7 +12,7 @@ export class Pokedex extends Command {
             description: 'Find information about any pokemon!',
             arguments: [
                 {
-                    name: 'name',
+                    name: 'pokemon',
                     description: 'The name of the pokemon to search.',
                     required: true,
                     expand: true
