@@ -90,10 +90,12 @@ export class Database {
                 Framework.getLogger().error('Database connection closed due to an error:');
                 Framework.getLogger().error(error.message);
 
-                this.connect(true).catch(err => {
-                    Framework.getLogger().error('Reconnect failed, terminating bot...');
-                    process.exit(1);
-                });
+                setTimeout(() => {
+                    this.connect(true).catch(err => {
+                        Framework.getLogger().error('Reconnect failed, terminating bot...');
+                        process.exit(1);
+                    });
+                }, 5000);
             });
         });
     }
