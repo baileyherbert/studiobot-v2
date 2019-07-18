@@ -59,7 +59,7 @@ export class Database {
     /**
      * Starts the database.
      */
-    public static connect() : Promise<void> {
+    public static connect(showReconnectMessage: boolean = false) : Promise<void> {
         return new Promise((resolve, reject) => {
             let config = Framework.getConfig().database;
 
@@ -74,8 +74,26 @@ export class Database {
             });
 
             this.connection.connect(err => {
-                if (err) reject(err);
-                else resolve();
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    if (showReconnectMessage) {
+                        Framework.getLogger().info('Reconnected to database.');
+                    }
+
+                    resolve();
+                }
+            });
+
+            this.connection.on('error', error => {
+                Framework.getLogger().error('Database connection closed due to an error:');
+                Framework.getLogger().error(error.message);
+
+                this.connect(true).catch(err => {
+                    Framework.getLogger().error('Reconnect failed, terminating bot...');
+                    process.exit(1);
+                });
             });
         });
     }
