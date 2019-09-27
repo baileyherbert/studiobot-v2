@@ -159,13 +159,13 @@ export class Listener {
      * Emitted whenever a channel is created.
      * @param {Channel} channel The channel that was created
      */
-    public onChannelCreate(channel: Channel): Promise<void> | void {}
+    public onChannelCreate(channel: Channel): Promise<any> | any {}
 
     /**
      * Emitted whenever a channel is deleted.
      * @param {Channel} channel The channel that was deleted
      */
-    public onChannelDelete(channel: Channel): Promise<void> | void {}
+    public onChannelDelete(channel: Channel): Promise<any> | any {}
 
     /**
      * Emitted whenever the pins of a channel are updated. Due to the nature of the WebSocket event, not much
@@ -174,7 +174,7 @@ export class Listener {
      * @param {Channel} channel The channel that the pins update occured in
      * @param {Date} time The time of the pins update
      */
-    public onChannelPinsUpdate(channel: Channel, time: Date): Promise<void> | void {}
+    public onChannelPinsUpdate(channel: Channel, time: Date): Promise<any> | any {}
 
     /**
      * Emitted whenever a channel is updated - e.g. name change, topic change.
@@ -182,35 +182,35 @@ export class Listener {
      * @prop {Channel} oldChannel The channel before the update
      * @prop {Channel} newChannel The channel after the update
      */
-    public onChannelUpdate(oldChannel: Channel, newChannel: Channel): Promise<void> | void {}
+    public onChannelUpdate(oldChannel: Channel, newChannel: Channel): Promise<any> | any {}
 
     /**
      * Emitted for general debugging information.
      *
      * @prop {string} info The debug information
      */
-    public onDebug(info: string): Promise<void> | void {}
+    public onDebug(info: string): Promise<any> | any {}
 
     /**
      * Emitted when the client's WebSocket disconnects and will no longer attempt to reconnect.
      *
      * @prop {CloseEvent} event The WebSocket close event
      */
-    public onDisconnect(event: CloseEvent): Promise<void> | void {}
+    public onDisconnect(event: CloseEvent): Promise<any> | any {}
 
     /**
      * Emitted whenever a custom emoji is created in a guild.
      *
      * @prop {Emoji} emoji The emoji that was created
      */
-    public onEmojiCreate(emoji: Emoji): Promise<void> | void {}
+    public onEmojiCreate(emoji: Emoji): Promise<any> | any {}
 
     /**
      * Emitted whenever a custom guild emoji is deleted.
      *
      * @prop {Emoji} emoji The emoji that was deleted
      */
-    public onEmojiDelete(emoji: Emoji): Promise<void> | void {}
+    public onEmojiDelete(emoji: Emoji): Promise<any> | any {}
 
     /**
      * aaaaa
@@ -218,14 +218,14 @@ export class Listener {
      * @prop {Emoji} oldEmoji The old emoji
      * @prop {Emoji} newEmoji The new emoji
      */
-    public onEmojiUpdate(oldEmoji: Emoji, newEmoji: Emoji): Promise<void> | void {}
+    public onEmojiUpdate(oldEmoji: Emoji, newEmoji: Emoji): Promise<any> | any {}
 
     /**
      * Emitted whenever the client's WebSocket encounters a connection error.
      *
      * @prop {Error} error The encountered error
      */
-    public onError(error: Error): Promise<void> | void {}
+    public onError(error: Error): Promise<any> | any {}
 
     /**
      * Emitted whenever a member is banned from a guild.
@@ -233,7 +233,7 @@ export class Listener {
      * @prop {Guild} guild The guild that the ban occurred in
      * @prop {User} user The user that was banned
      */
-    public onGuildBanAdd(guild: Guild, user: User): Promise<void> | void {}
+    public onGuildBanAdd(guild: Guild, user: User): Promise<any> | any {}
 
     /**
      * Emitted whenever a member is unbanned from a guild.
@@ -241,42 +241,42 @@ export class Listener {
      * @prop {Guild} guild The guild that the unban occurred in
      * @prop {User} user The user that was unbanned
      */
-    public onGuildBanRemove(guild: Guild, user: User): Promise<void> | void {}
+    public onGuildBanRemove(guild: Guild, user: User): Promise<any> | any {}
 
     /**
      * Emitted whenever the client joins a guild.
      *
      * @prop {Guild} guild The created guild
      */
-    public onGuildCreate(guild: Guild): Promise<void> | void {}
+    public onGuildCreate(guild: Guild): Promise<any> | any {}
 
     /**
      * Emitted whenever a guild is deleted/left.
      *
      * @prop {Guild} guild The guild that was deleted
      */
-    public onGuildDelete(guild: Guild): Promise<void> | void {}
+    public onGuildDelete(guild: Guild): Promise<any> | any {}
 
     /**
      * Emitted whenever a user joins a guild.
      *
      * @prop {GuildMember} member The member that has joined a guild
      */
-    public onGuildMemberAdd(member: GuildMember): Promise<void> | void {}
+    public onGuildMemberAdd(member: GuildMember): Promise<any> | any {}
 
     /**
      * Emitted whenever a member becomes available in a large guild.
      *
      * @prop {GuildMember} member The member that became available
      */
-    public onGuildMemberAvailable(member: GuildMember): Promise<void> | void {}
+    public onGuildMemberAvailable(member: GuildMember): Promise<any> | any {}
 
     /**
      * Emitted whenever a member leaves a guild, or is kicked.
      *
      * @prop {GuildMember} member The member that has left/been kicked from the guild
      */
-    public onGuildMemberRemove(member: GuildMember): Promise<void> | void {}
+    public onGuildMemberRemove(member: GuildMember): Promise<any> | any {}
 
     /**
      * Emitted whenever a chunk of guild members is received (all members come from the same guild).
@@ -284,7 +284,7 @@ export class Listener {
      * @prop {GuildMember[]} members The members in the chunk
      * @prop {Guild} guild The guild related to the member chunk
      */
-    public onGuildMembersChunk(members: GuildMember[], guild: Guild): Promise<void> | void {}
+    public onGuildMembersChunk(members: GuildMember[], guild: Guild): Promise<any> | any {}
 
     /**
      * Emitted once a guild member starts/stops speaking.
@@ -292,7 +292,7 @@ export class Listener {
      * @prop {GuildMember} member The member that started/stopped speaking
      * @prop {boolean} speaking Whether or not the member is speaking
      */
-    public onGuildMemberSpeaking(member: GuildMember, speaking: boolean): Promise<void> | void {}
+    public onGuildMemberSpeaking(member: GuildMember, speaking: boolean): Promise<any> | any {}
 
     /**
      * Emitted whenever a guild member changes - i.e. new role, removed role, nickname.
@@ -300,14 +300,14 @@ export class Listener {
      * @prop {GuildMember} oldMember The member before the update
      * @prop {GuildMember} newMember The member after the update
      */
-    public onGuildMemberUpdate(oldMember: GuildMember, newMember: GuildMember): Promise<void> | void {}
+    public onGuildMemberUpdate(oldMember: GuildMember, newMember: GuildMember): Promise<any> | any {}
 
     /**
      * Emitted whenever a guild becomes unavailable, likely due to a server outage.
      *
      * @prop {Guild} guild The guild that has become unavailable
      */
-    public onGuildUnavailable(guild: Guild): Promise<void> | void {}
+    public onGuildUnavailable(guild: Guild): Promise<any> | any {}
 
     /**
      * Emitted whenever a guild is updated - e.g. name change.
@@ -315,28 +315,28 @@ export class Listener {
      * @prop {Guild} oldGuild The guild before the update
      * @prop {Guild} newGuild The guild after the update
      */
-    public onGuildUpdate(oldGuild: Guild, newGuild: Guild): Promise<void> | void {}
+    public onGuildUpdate(oldGuild: Guild, newGuild: Guild): Promise<any> | any {}
 
     /**
      * Emitted whenever a message is created.
      *
      * @prop {Message} message The created message
      */
-    public onMessage(message: Message): Promise<void> | void {}
+    public onMessage(message: Message): Promise<any> | any {}
 
     /**
      * Emitted whenever a message is deleted.
      *
      * @prop {Message} message The deleted message
      */
-    public onMessageDelete(message: Message): Promise<void> | void {}
+    public onMessageDelete(message: Message): Promise<any> | any {}
 
     /**
      * Emitted whenever messages are deleted in bulk.
      *
      * @prop {Collection<Snowflake, Message>} messages The deleted messages, mapped by their ID
      */
-    public onMessageDeleteBulk(messages: Collection<Snowflake, Message>): Promise<void> | void {}
+    public onMessageDeleteBulk(messages: Collection<Snowflake, Message>): Promise<any> | any {}
 
     /**
      * Emitted whenever a reaction is added to a cached message.
@@ -344,7 +344,7 @@ export class Listener {
      * @prop {MessageReaction} messageReaction The reaction object
      * @prop {User} user The user that applied the emoji or reaction emoji
      */
-    public onMessageReactionAdd(messageReaction: MessageReaction, user: User): Promise<void> | void {}
+    public onMessageReactionAdd(messageReaction: MessageReaction, user: User): Promise<any> | any {}
 
     /**
      * Emitted whenever a reaction is removed from a cached message.
@@ -352,14 +352,14 @@ export class Listener {
      * @prop {MessageReaction} messageReaction The reaction object
      * @prop {User} user The user whose emoji or reaction emoji was removed
      */
-    public onMessageReactionRemove(messageReaction: MessageReaction, user: User): Promise<void> | void {}
+    public onMessageReactionRemove(messageReaction: MessageReaction, user: User): Promise<any> | any {}
 
     /**
      * Emitted whenever all reactions are removed from a cached message.
      *
      * @prop {Message} message The message the reactions were removed from
      */
-    public onMessageReactionRemoveAll(message: Message): Promise<void> | void {}
+    public onMessageReactionRemoveAll(message: Message): Promise<any> | any {}
 
     /**
      * Emitted whenever a message is updated - e.g. embed or content change.
@@ -367,7 +367,7 @@ export class Listener {
      * @prop {Message} oldMessage The message before the update
      * @prop {Message} newMessage The message after the update
      */
-    public onMessageUpdate(oldMessage: Message, newMessage: Message): Promise<void> | void {}
+    public onMessageUpdate(oldMessage: Message, newMessage: Message): Promise<any> | any {}
 
     /**
      * Emitted whenever a guild member's presence changes, or they change one of their details.
@@ -375,40 +375,40 @@ export class Listener {
      * @prop {GuildMember} oldMember The member before the presence update
      * @prop {GuildMember} newMember The member after the presence update
      */
-    public onPresenceUpdate(oldMember: GuildMember, newMember: GuildMember): Promise<void> | void {}
+    public onPresenceUpdate(oldMember: GuildMember, newMember: GuildMember): Promise<any> | any {}
 
     /**
      * Emitted when the client hits a rate limit while making a request
      *
      * @prop {RateLimitObject} rateLimitInfo Object containing the rate limit info
      */
-    public onRateLimit(rateLimitInfo: RateLimitObject): Promise<void> | void {}
+    public onRateLimit(rateLimitInfo: RateLimitObject): Promise<any> | any {}
 
     /**
      * Emitted whenever the client tries to reconnect to the WebSocket.
      */
-    public onReconnecting(): Promise<void> | void {}
+    public onReconnecting(): Promise<any> | any {}
 
     /**
      * Emitted whenever a WebSocket resumes.
      *
      * @prop {number} replayed The number of events that were replayed
      */
-    public onResume(replayed: number): Promise<void> | void {}
+    public onResume(replayed: number): Promise<any> | any {}
 
     /**
      * Emitted whenever a role is created.
      *
      * @prop {Role} role The role that was created
      */
-    public onRoleCreate(role: Role): Promise<void> | void {}
+    public onRoleCreate(role: Role): Promise<any> | any {}
 
     /**
      * Emitted whenever a guild role is deleted.
      *
      * @prop {Role} role The role that was deleted
      */
-    public onRoleDelete(role: Role): Promise<void> | void {}
+    public onRoleDelete(role: Role): Promise<any> | any {}
 
     /**
      * Emitted whenever a guild role is updated.
@@ -416,7 +416,7 @@ export class Listener {
      * @prop {Role} oldRole The role before the update
      * @prop {Role} newRole The role after the update
      */
-    public onRoleUpdate(oldRole: Role, newRole: Role): Promise<void> | void {}
+    public onRoleUpdate(oldRole: Role, newRole: Role): Promise<any> | any {}
 
     /**
      * Emitted whenever a user's details (e.g. username) are changed.
@@ -424,7 +424,7 @@ export class Listener {
      * @prop {User} oldUser The user before the update
      * @prop {User} newUser The user after the update
      */
-    public onUserUpdate(oldUser: User, newUser: User): Promise<void> | void {}
+    public onUserUpdate(oldUser: User, newUser: User): Promise<any> | any {}
 
     /**
      * Emitted whenever a user changes voice state - e.g. joins/leaves a channel, mutes/unmutes.
@@ -432,14 +432,14 @@ export class Listener {
      * @prop {GuildMember} oldMember The member before the voice state update
      * @prop {GuildMember} newMember The member after the voice state update
      */
-    public onVoiceStateUpdate(oldMember: GuildMember, newMember: GuildMember): Promise<void> | void {}
+    public onVoiceStateUpdate(oldMember: GuildMember, newMember: GuildMember): Promise<any> | any {}
 
     /**
      * Emitted for general warnings.
      *
      * @prop {string} info The warning
      */
-    public onWarn(info: string): Promise<void> | void {}
+    public onWarn(info: string): Promise<any> | any {}
 }
 
 type RateLimitObject = {
