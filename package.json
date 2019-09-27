@@ -3,6 +3,7 @@
     "description": "Discord bot",
     "version": "1.0.0",
     "license": "MIT",
+    "main": "start.js",
     "repository": {
         "type": "git",
         "url": "https://github.com/baileyherbert/studiobot"
@@ -17,7 +18,6 @@
         "adm-zip": "^0.4.13",
         "chalk": "^2.4.2",
         "cheerio": "^1.0.0-rc.3",
-        "cleverbot-api": "^1.0.3",
         "cron": "^1.7.1",
         "discord.js": "^11.5.1",
         "easy-utf8-table": "^0.2.0",
