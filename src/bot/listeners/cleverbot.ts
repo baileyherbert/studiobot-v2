@@ -1,14 +1,21 @@
 import { Listener } from "@api";
 import { Message } from "discord.js";
 import { Framework } from "@core/framework";
-
-const CleverbotAPI = require('cleverbot-api');
-let cleverbot : any;
+import { Cleverbot } from '@bot/libraries/cleverbot';
+import { Emoji } from '@bot/libraries/emoji';
+import chalk from 'chalk';
 
 export class CleverbotListener extends Listener
 {
 
-    onMessage(message: Message) {
+    private conversations : { [channelId: string]: Cleverbot } = {};
+
+    /**
+     * Triggers whenever the bot sees a new message anywhere it has access to.
+     *
+     * @param message
+     */
+    async onMessage(message: Message) {
         if (message.channel.type != 'text') return;
         if (message.member.user.bot) return;
 
@@ -18,40 +25,58 @@ export class CleverbotListener extends Listener
 
         if (matches) {
             let content = matches[1];
+            let conversation = this.getConversation(message.channel.id);
 
-            if (!cleverbot) {
-                let key = Framework.getConfig().authentication.cleverbot.key;
+            // Debugging
+            let serverId = (Framework.getEnvironment() == 'production') ? `${chalk.gray(message.guild.name)}: ` : '';
+            Framework.getLogger().info(`${serverId}${message.member.user.tag} said: ${content}`);
 
-                if (!key) {
-                    this.getLogger().error('Cleverbot is not configured on this bot. To activate it, enter an API key.');
-                    return;
-                }
-
-                cleverbot = new CleverbotAPI(key);
+            // If we don't get a conversation back, then the bot isn't capable of talking
+            if (!conversation) {
+                this.getLogger().error('Cleverbot is not configured on this bot. To activate it, enter an API key.');
+                return await message.channel.send(`${Emoji.ERROR}  Sorry, but my owner hasn't configured me to do that yet!`);
             }
 
+            // Tell the user(s) that we are getting a reply
             message.channel.startTyping();
 
-            cleverbot.getReply({
-                input: encodeURI(content)
-            }, (error : Error, response : {input: string; output: string}) => {
-                if (error) {
-                    this.getLogger().error('Error occurred when running cleverscript:');
-                    this.getLogger().error(error);
-                    message.channel.stopTyping();
-                    return;
-                }
+            // Send the message and get a response
+            try {
+                let response = await conversation.send(content);
+                await sleep(1000);
 
-                setTimeout(() => {
-                    if (response.output.trim().length == 0) {
-                        response.output = 'I have nothing to say right now.';
-                    }
+                // Handle cases where there is an empty response (random cleverscript bug)
+                if (response.length == 0) response = 'I have nothing to say right now.';
 
-                    message.channel.stopTyping();
-                    message.channel.send(`:speech_balloon:  ${message.member} ${response.output}`);
-                }, 1000);
-            });
+                // Send the response
+                message.channel.stopTyping();
+                await message.channel.send(`:speech_balloon:  ${message.member} ${response}`);
+
+                // Debugging
+                Framework.getLogger().info(`${serverId}Responded to ${message.member.user.tag}: ${response}`);
+            }
+            catch (error) {
+                this.getLogger().error('Error occurred when running cleverscript:');
+                this.getLogger().error(error);
+                message.channel.stopTyping();
+            }
         }
+    }
+
+    /**
+     * Retrieves the `Cleverbot` instance for the given channel, creating one if necessary.
+     *
+     * @param channelId
+     */
+    private getConversation(channelId: string) {
+        if (channelId in this.conversations) {
+            return this.conversations[channelId];
+        }
+
+        let key = Framework.getConfig().authentication.cleverbot.key;
+        if (!key) return;
+
+        return this.conversations[channelId] = new Cleverbot(key);
     }
 
 }
