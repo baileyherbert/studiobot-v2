@@ -50,13 +50,14 @@ export class Framework {
         await this.startDatabase();
 
         if (!CommandLine.hasFlag('dry')) {
-            // Start the client
-            this.logger.info('Logging in...');
+            // Create the client
             this.client = new Client();
-            this.client.login(this.config.authentication.discord.token);
 
-            // Wait for ready
+            // Define startup procedure
+            let commandsLoaded = false;
             this.client.on('ready', () => {
+                if (commandsLoaded) return this.getLogger().info('Reconnected.');
+                commandsLoaded = true;
                 this.logger.clear();
                 this.logger.info('Logged in as %s.', this.client.user.tag);
                 this.logger.debug('Logged in with Client Id: %s', this.client.user.id);
@@ -75,6 +76,10 @@ export class Framework {
                 // Start watching files for changes
                 if (this.getEnvironment() == 'test') Filesystem.watch();
             });
+
+            // Login
+            this.logger.info('Logging in...');
+            await this.client.login(this.config.authentication.discord.token);
         }
         else {
             // Do a dry run - no client
