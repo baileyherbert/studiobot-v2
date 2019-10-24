@@ -58,6 +58,7 @@ export class Framework {
             this.client.on('ready', () => {
                 if (commandsLoaded) return this.getLogger().info('Reconnected.');
                 commandsLoaded = true;
+
                 this.logger.clear();
                 this.logger.info('Logged in as %s.', this.client.user.tag);
                 this.logger.debug('Logged in with Client Id: %s', this.client.user.id);
@@ -70,6 +71,9 @@ export class Framework {
                 this.loadScripts();
                 this.loadJobs();
                 this.listen();
+
+                this.client.on('reconnecting', () => this.getLogger().info('Reconnecting...'));
+                this.client.on('disconnect', () => this.getLogger().info('Disconnected.'));
 
                 this.logger.info('Bot is online...');
 
