@@ -1,9 +1,9 @@
 import { Logger } from '@core/bot/logger';
 
-import * as path from 'path';
-import * as fs from 'fs';
-import * as request from 'request-promise';
-import * as admZip from 'adm-zip';
+import path from 'path';
+import fs from 'fs';
+import request from 'request-promise';
+import admZip from 'adm-zip';
 
 export class ImagePack {
     protected dirPath: string;

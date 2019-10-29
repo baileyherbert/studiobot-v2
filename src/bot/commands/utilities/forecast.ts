@@ -1,10 +1,10 @@
 import { Command, Input } from '@api';
-import * as request from 'request';
+import request from 'request';
 import { Message } from 'discord.js';
 import { Emoji } from '@bot/libraries/emoji';
 import { RichEmbed } from 'discord.js';
 import { Framework } from '@core/framework';
-import * as moment from 'moment';
+import moment from 'moment';
 
 export class Forecast extends Command {
     constructor() {

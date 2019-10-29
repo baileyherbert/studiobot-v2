@@ -1,5 +1,5 @@
 import { Command, Input } from '@api';
-import * as request from 'request';
+import request from 'request';
 import { Emoji } from '@bot/libraries/emoji';
 import { RichEmbed } from 'discord.js';
 

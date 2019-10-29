@@ -1,6 +1,6 @@
 import { Command, Input } from '@api';
-import * as request from 'request';
-import * as cheerio from 'cheerio';
+import request from 'request';
+import cheerio from 'cheerio';
 
 export class Item extends Command {
     constructor() {
@@ -13,7 +13,7 @@ export class Item extends Command {
                     description: 'Relevant links to items based on your search.',
                     required: true,
                     expand: true
-                    
+
                 }
             ]
         });
@@ -32,7 +32,7 @@ export class Item extends Command {
 
         let newegg_search = 'https://www.newegg.com/Product/ProductList.aspx?Submit=ENE&DEPA=0&Order=BESTMATCH&Description=' + item_search;
         let newegg = 'https://www.newegg.com';
-        
+
 
         request(amazon_search, {gzip: true}, function(a, b, body){
             let $ = cheerio.load(body);

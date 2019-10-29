@@ -1,6 +1,6 @@
 import { Command, Input } from '@api';
 import { GuildMember } from 'discord.js';
-import * as request from 'request';
+import request from 'request';
 import { Emoji } from '@bot/libraries/emoji';
 import { Message } from 'discord.js';
 

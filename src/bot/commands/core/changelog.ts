@@ -1,9 +1,9 @@
 import { Command, Input } from '@api';
 import { Framework } from '@core/framework';
-import * as fs from 'fs';
+import fs from 'fs';
 import { Emoji } from '@bot/libraries/emoji';
 import { RichEmbed } from 'discord.js';
-import * as moment from 'moment';
+import moment from 'moment';
 
 export class Changelog extends Command {
     constructor() {

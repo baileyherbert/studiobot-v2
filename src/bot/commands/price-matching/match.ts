@@ -1,6 +1,6 @@
 import { Command, Input } from '@api';
-import * as request from 'request';
-import * as cheerio from 'cheerio';
+import request from 'request';
+import cheerio from 'cheerio';
 
 export class Match extends Command {
     constructor() {
@@ -13,7 +13,7 @@ export class Match extends Command {
                     description: 'A link to the item of interest.',
                     constraint: 'url',
                     required: true,
-                    
+
                 }
             ]
         });

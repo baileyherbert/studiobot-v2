@@ -1,8 +1,8 @@
 import { Command, Input } from '@api';
 import { Emoji } from '@bot/libraries/emoji';
-import * as request from 'request';
+import request from 'request';
 import { Response } from 'request';
-import * as Jimp from 'jimp';
+import Jimp from 'jimp';
 import { Framework } from '@core/framework';
 
 export class LastFm extends Command {

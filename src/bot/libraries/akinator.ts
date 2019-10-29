@@ -1,4 +1,4 @@
-import * as request from 'request-promise';
+import request from 'request-promise';
 
 export class Akinator {
     private session?: Session;

@@ -1,6 +1,5 @@
 import { Command, Input } from '@api';
-import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Role } from 'discord.js';
-import * as request from 'request';
+import request from 'request';
 import { Response } from 'request';
 import { Colors } from "@bot/libraries/color";
 

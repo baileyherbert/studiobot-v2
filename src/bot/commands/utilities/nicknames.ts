@@ -1,6 +1,6 @@
 import { Command, Input } from '@api';
 import { GuildMember } from 'discord.js';
-import * as moment from 'moment';
+import moment from 'moment';
 
 export class Nicknames extends Command {
     constructor() {

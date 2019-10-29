@@ -1,4 +1,4 @@
-import * as SocketIO from 'socket.io';
+import SocketIO from 'socket.io';
 import { Server as SocketServer } from 'socket.io';
 import { Framework } from '@core/framework';
 

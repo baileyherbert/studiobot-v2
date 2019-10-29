@@ -9,6 +9,7 @@
         "strictNullChecks": true,
         "noUnusedLocals": false,
         "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
         "sourceMap": true,
         "watch": false,
         "baseUrl": "./src/",

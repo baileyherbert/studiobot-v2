@@ -1,6 +1,6 @@
 import {Command, Input} from "@api";
 import {Emoji} from "@bot/libraries/emoji";
-import * as Jimp from 'jimp';
+import Jimp from 'jimp';
 import {Betting} from "@bot/libraries/betting";
 import {Message} from "discord.js";
 import {Reactions, ReactionListener} from "@bot/libraries/reactions";

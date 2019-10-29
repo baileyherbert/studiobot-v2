@@ -1,6 +1,6 @@
-import * as request from "request";
+import request from "request";
 import {Response} from "request";
-import * as cheerio from "cheerio";
+import cheerio from "cheerio";
 
 
 export function searchyt(searchTerm: string): Promise<{ title: string, url: string }[]> {

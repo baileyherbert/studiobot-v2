@@ -1,6 +1,6 @@
 import { Command, Input } from '@api';
 import { Emoji } from '@bot/libraries/emoji';
-import * as request from 'request';
+import request from 'request';
 import { Response } from 'request';
 
 export class Pokedex extends Command {

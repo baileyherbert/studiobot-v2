@@ -1,6 +1,6 @@
 import { Command, Input } from '@api';
 import { GuildMember} from 'discord.js';
-import * as Jimp from 'jimp';
+import Jimp from 'jimp';
 import * as FS from 'fs';
 
 export class Rip extends Command {

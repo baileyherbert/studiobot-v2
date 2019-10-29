@@ -1,6 +1,6 @@
 import { Command, Input } from '@api';
 import { Framework } from '@core/framework';
-import * as moment from 'moment';
+import moment from 'moment';
 
 export class Uptime extends Command {
     constructor() {
