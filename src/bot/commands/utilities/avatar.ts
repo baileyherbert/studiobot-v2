@@ -3,6 +3,7 @@ import { GuildMember } from 'discord.js';
 import request from 'request';
 import { Emoji } from '@bot/libraries/emoji';
 import { Message } from 'discord.js';
+import { MessageAttachment } from 'discord.js';
 
 export class Avatar extends Command {
     constructor() {
@@ -23,7 +24,8 @@ export class Avatar extends Command {
     async execute(input: Input) {
         let user = input.getArgument('user') as GuildMember;
         let promise : Promise<Buffer> = new Promise((resolve, reject) => {
-            request(user.user.avatarURL({ format: 'png', dynamic: true, size: 2048 })!, { encoding: null }, function(err, response, buffer) {
+            let url = user.user.avatarURL({ format: 'png', dynamic: true })!;
+            request(url, { encoding: null }, function(err, response, buffer) {
                 if (err) return reject(err);
                 resolve(buffer);
             });
@@ -34,12 +36,11 @@ export class Avatar extends Command {
 
         // Get the buffer
         try {
-            input.channel.send({
-                file: await promise
-            });
+            await input.channel.send(new MessageAttachment(await promise, 'Avatar.png'));
             await message.delete();
         }
         catch (err) {
+            console.error(err);
             await message.edit(`${Emoji.ERROR}  Failed to download avatar, try again in a few moments.`);
             message.deleteAfter(6000);
         }
