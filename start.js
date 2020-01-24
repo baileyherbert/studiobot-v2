@@ -11,4 +11,7 @@ require('source-map-support').install();
 require('./bootstrap/resolver');
 
 // Start the framework
-require('@core/framework').Framework.start();
+require('@core/framework').Framework.start().catch(err => {
+    console.error('Failed to start the bot:', err);
+    process.exit(1);
+});

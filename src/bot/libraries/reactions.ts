@@ -38,7 +38,7 @@ export class Reactions {
             this.listening[message.id].callbacks.forEach(fn => {
                 fn({
                     action: action,
-                    member: message.guild.members.get(user.id) as GuildMember,
+                    member: message.guild!.members.get(user.id) as GuildMember,
                     message: message,
                     emoji: (reaction.emoji as Emoji).toString()
                 });

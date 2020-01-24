@@ -206,7 +206,7 @@ export class Trivia extends Command {
         let reactionAnswers: { [id: string]: boolean } = {};
 
         let listener = Reactions.listen(message, reaction => {
-            if (reaction.member == input.guild.member(Framework.getClient().user)) return;
+            if (reaction.member == input.guild.member(Framework.getClient().user!)) return;
             if (reaction.action == 'remove') return;
 
             if (reaction.action == "add") {
@@ -245,7 +245,7 @@ export class Trivia extends Command {
 
         _.each(reactionAnswers, (wasCorrect, id) => {
             // Get the member instance from their id
-            let member = input.guild.member(id);
+            let member = input.guild.member(id)!;
 
             // Add them to the appropriate array
             if (wasCorrect){

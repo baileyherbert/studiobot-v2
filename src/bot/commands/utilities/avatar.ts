@@ -23,7 +23,7 @@ export class Avatar extends Command {
     async execute(input: Input) {
         let user = input.getArgument('user') as GuildMember;
         let promise : Promise<Buffer> = new Promise((resolve, reject) => {
-            request(user.user.avatarURL, { encoding: null}, function(err, response, buffer) {
+            request(user.user.avatarURL({ format: 'png', dynamic: true, size: 2048 })!, { encoding: null }, function(err, response, buffer) {
                 if (err) return reject(err);
                 resolve(buffer);
             });

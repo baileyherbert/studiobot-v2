@@ -1,5 +1,5 @@
 import { Command, Input } from '@api';
-import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Role } from 'discord.js';
+import { Message, GuildMember } from 'discord.js';
 import { LobbyManager } from '@bot/libraries/games/lobby-manager'
 import { TTTLobby } from '@bot/libraries/games/tictactoe/ttt-lobby';
 import { Lobby } from '@bot/libraries/games/lobby';
@@ -33,11 +33,6 @@ export class QueueJoinGame extends Command {
                     required: true,
                     options: ['start', 'join', 'abort']
                 },
-                /*{
-                    name: 'gameType',
-                    required: true,
-                    options: ['tictactoe']
-                },*/
                 {
                     name: 'options',
                     required: false,
@@ -229,7 +224,7 @@ export class QueueJoinGame extends Command {
             if (currentLobby.GetPlayer(2) !== null) {
                 message += this.AddPlayerNameToMessage(currentLobby.GetPlayer(2) as GuildMember);
             }
-            
+
             message += String(lobbiesInServer[index].GetType());
         }
 

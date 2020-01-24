@@ -1,6 +1,6 @@
 import { Command, Input } from '@api';
 import { Emoji } from '@libraries/emoji';
-import { RichEmbed } from 'discord.js';
+import { MessageEmbed } from 'discord.js';
 
 export class Color extends Command {
     constructor() {
@@ -24,7 +24,7 @@ export class Color extends Command {
             let hex = this.hex(r, g, b);
             let url = `https://temp.bailey.sh/${r}/${g}/${b}/image.jpg`;
 
-            await input.channel.send(new RichEmbed({
+            await input.channel.send(new MessageEmbed({
                 author: {
                     name: hex,
                     icon_url: url

@@ -2,7 +2,7 @@ import { Command, Input } from '@api';
 import request from 'request';
 import { Message } from 'discord.js';
 import { Emoji } from '@bot/libraries/emoji';
-import { RichEmbed } from 'discord.js';
+import { MessageEmbed } from 'discord.js';
 import { Framework } from '@core/framework';
 
 export class Weather extends Command {
@@ -66,7 +66,7 @@ export class Weather extends Command {
             let wind = `${Math.floor(parsed.wind.speed + 0.5)} mph ${deg}`;
 
             // Finally, send the weather!
-            await input.channel.send(new RichEmbed({
+            await input.channel.send(new MessageEmbed({
                 title: `Weather for ${parsed.name}`,
                 description: `${icon}  ${parsed.weather[0].description.capitalize()}\n\u200b`,
                 color: color,

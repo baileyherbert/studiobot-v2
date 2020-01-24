@@ -66,7 +66,7 @@ export class UserPoll extends EventEmitter {
 
     private async createListeners() {
         this.listener = Reactions.listen(this.message!, reaction => {
-            if (reaction.member == this.channel.guild.member(Framework.getClient().user)) return;
+            if (reaction.member == this.channel.guild.member(Framework.getClient().user!)) return;
             if (reaction.action == 'remove') return;
 
             let number = this.reactions.indexOf(reaction.emoji);

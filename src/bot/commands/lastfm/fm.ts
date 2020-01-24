@@ -76,8 +76,9 @@ export class LastFm extends Command {
                             prefix = 'Current:';
                         }
 
-                        let icon = input.member.user.avatarURL;
+                        let icon = input.member.user.avatarURL({ format: 'png', dynamic: true, size: 2048 });
                         let uName = ', ' + input.member.displayName;
+
                         if (user != db.lastfmId) {
                             icon = nullURL;
                             uName = '';

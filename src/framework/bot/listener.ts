@@ -72,7 +72,7 @@ export class Listener {
         this.set('message', async (message: Message) => {
             if (message.member) {
                 await message.member.load();
-                await message.guild.load();
+                await message.guild!.load();
             }
 
             await this.run(this.onMessage(message));
@@ -81,7 +81,7 @@ export class Listener {
         this.set('messageDelete', async (message: Message) => {
             if (message.member) {
                 await message.member.load();
-                await message.guild.load();
+                await message.guild!.load();
             }
 
             await this.run(this.onMessageDelete(message));

@@ -1,7 +1,7 @@
 import { Command, Input } from '@api';
 import { Framework } from '@core/framework';
 import { Documentation } from '@bot/libraries/documentation';
-import { Util, RichEmbed } from 'discord.js';
+import { MessageEmbed } from 'discord.js';
 
 export let Sections : HelpSections = {
     'Basic': [
@@ -84,7 +84,7 @@ export class Help extends Command {
         });
 
         // Build the embed
-        let embed = new RichEmbed({
+        let embed = new MessageEmbed({
             description: 'The prefix for this server is `' + input.guild.settings.prefix + '`.',
             color: 0x1c7ed6,
             footer: { text: 'For detailed information about a command, use !help command or !command help.' },

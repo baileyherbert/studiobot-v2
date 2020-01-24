@@ -1,5 +1,5 @@
 import {Command, Input} from '@api';
-import {RichEmbed} from 'discord.js';
+import {MessageEmbed} from 'discord.js';
 import {Economy} from '@bot/libraries/economy';
 import {Emoji} from "@libraries/emoji";
 
@@ -41,7 +41,7 @@ export class Slots extends Command {
 
         //if won then display that the user has won
         if (emojis[slot1] === emojis[slot2] && emojis[slot1] === emojis[slot3]) {
-            let wEmbed = new RichEmbed()
+            let wEmbed = new MessageEmbed()
                 .setFooter("Congrats, You've Won!")
                 .setTitle(':slot_machine: SLOT MACHINE :slot_machine:')
                 .addField('Result!', emojis[slot1] + emojis[slot2] + emojis[slot3]);
@@ -56,7 +56,7 @@ export class Slots extends Command {
 
         //if not then output you've lost
         else {
-            let wEmbed = new RichEmbed()
+            let wEmbed = new MessageEmbed()
                 .setFooter("You've Lost, Try again?")
                 .setTitle(':slot_machine: SLOT MACHINE :slot_machine:')
                 .addField('Result', emojis[slot1] + emojis[slot2] + emojis[slot3]);

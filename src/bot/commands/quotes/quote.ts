@@ -45,7 +45,7 @@ export class Quote extends Command {
 
                 //User to attribute quote to
                 if (user) {
-                    if (!quote && user.id != Framework.getClient().user.id) {
+                    if (!quote && user.id != Framework.getClient().user!.id) {
                         let q = await this.getLastMessage(<TextChannel>input.channel, user);
                         if (q) quote = q.content;
                     }
@@ -79,8 +79,9 @@ export class Quote extends Command {
                     let q = db.quotes[id-1];
                     if (q) {
                         let member: string;
-                        if (input.guild.member(q.memberId)) {
-                            member = input.guild.member(q.memberId).displayName;
+                        let target = input.guild.member(q.memberId);
+                        if (target) {
+                            member = target.displayName;
                         } else {
                             member = "Anonymous";
                         }
@@ -106,8 +107,9 @@ export class Quote extends Command {
                     } else {
                         let id = _.random(0, _.size(db.quotes)-1);
                         let member: string;
-                        if (input.guild.member(db.quotes[id].memberId)) {
-                            member = input.guild.member(db.quotes[id].memberId).displayName;
+                        let target = input.guild.member(db.quotes[id].memberId);
+                        if (target) {
+                            member = target.displayName;
                         } else {
                             member = "Anonymous";
                         }
@@ -123,7 +125,7 @@ export class Quote extends Command {
     }
 
     private async getLastMessage(channel: TextChannel, member: GuildMember) : Promise<Message | undefined> {
-        let messages = await channel.fetchMessages({ limit: 100, before: channel.lastMessageID });
+        let messages = await channel.messages.fetch({ limit: 100, before: channel.lastMessageID! });
 
         let last = _.find(messages.array(), (msg : Message) => {
             return msg.member == member && !msg.content.startsWith(channel.guild.settings.prefix);

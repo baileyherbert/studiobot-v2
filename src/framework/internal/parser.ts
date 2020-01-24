@@ -5,11 +5,12 @@ import { Role } from "discord.js";
 import { Argument } from "./argument";
 import { Guild } from "discord.js";
 import { MemberBucket } from "@core/lib/database/member";
+import { PartialMessage } from 'discord.js';
 
 export class Parser {
     private command: Command;
-    private message: Message|undefined;
-    private guild: Guild|undefined;
+    private message: Message | PartialMessage | undefined;
+    private guild: Guild | undefined;
     private content: string;
 
     private compiledArguments: CompiledArgument[] = [];
@@ -18,10 +19,10 @@ export class Parser {
     private parsedContentBuffer : string;
     private parsedArguments: ParsedArgument[] = [];
 
-    constructor(command: Command, message: Message|undefined, content: string) {
+    constructor(command: Command, message: Message | PartialMessage | undefined, content: string) {
         this.command = command;
         this.message = message;
-        this.guild = message ? message.guild : undefined;
+        this.guild = message ? message.guild! : undefined;
         this.content = content.trim();
 
         // Build an array of arguments and their expressions

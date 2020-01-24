@@ -2,7 +2,7 @@ import { Command, Input } from '@api';
 import request from 'request';
 import { Message } from 'discord.js';
 import { Emoji } from '@bot/libraries/emoji';
-import { RichEmbed } from 'discord.js';
+import { MessageEmbed } from 'discord.js';
 import { Framework } from '@core/framework';
 import moment from 'moment';
 
@@ -93,7 +93,7 @@ export class Forecast extends Command {
             });
 
             // Finally, send the weather!
-            await input.channel.send(new RichEmbed({
+            await input.channel.send(new MessageEmbed({
                 title: parsed.city.name,
                 description: `Forecast for the next five days.\n\u200b`,
                 color: color,
