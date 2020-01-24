@@ -1,4 +1,4 @@
-import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Role } from 'discord.js';
+import { Message, GuildMember, Guild, TextChannel, DMChannel } from 'discord.js';
 import { TTTBoard, boardEnums } from '@bot/libraries/games/tictactoe/ttt-board';
 import { LobbyManager } from '@bot/libraries/games/lobby-manager';
 import { Logger } from '@core/bot/logger';
@@ -34,7 +34,7 @@ export class TTTLobby extends Lobby {
     private rowString : string;
     private colString : string;
 
-    constructor (server: Guild, channel: TextChannel | DMChannel | GroupDMChannel, manager: LobbyManager, player1: GuildMember | null = null, player2: GuildMember | null = null){
+    constructor (server: Guild, channel: TextChannel | DMChannel, manager: LobbyManager, player1: GuildMember | null = null, player2: GuildMember | null = null){
         super(server, channel, manager, "Tic-Tac-Toe", player1, player2);
         this.currentTurn = tttEnums.TurnEnum.Searching;
 
@@ -90,7 +90,7 @@ export class TTTLobby extends Lobby {
 
         let playerWithTurn = this.GetPlayerWithTurn();
         let playerSpaceIcon = this.GetPlayerWithTurnSpaceIcon();
-        
+
         if (playerWithTurn) {
             let turnMsgText = `\n${playerWithTurn.displayName}'s turn`;
 
@@ -130,11 +130,11 @@ export class TTTLobby extends Lobby {
         }
 
         let coordinateRegex = new RegExp('([' + this.rowString + this.colString + '])', 'gi');
-        const filter = (message : Message) => 
+        const filter = (message : Message) =>
                                 (message.member === playerWithTurn
                                 && coordinateRegex.test(message.content))
                                 || this.abort === true;
-        
+
         const collector = this.lobbyChannel.createMessageCollector(filter);
 
 
@@ -194,7 +194,7 @@ export class TTTLobby extends Lobby {
         return input;
     }
 
-    GetLobbyChannel() : TextChannel | DMChannel | GroupDMChannel {
+    GetLobbyChannel() : TextChannel | DMChannel {
         return this.lobbyChannel;
     }
 

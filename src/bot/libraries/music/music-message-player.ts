@@ -52,8 +52,8 @@ export class MusicMessagePlayer extends EventEmitter {
             embed: {
                 color: 3447003,
                 author: {
-                    name: `${Framework.getClient().user.username} - ${this.statusMessage()}`,
-                    icon_url: Framework.getClient().user.avatarURL
+                    name: `${Framework.getClient().user!.username} - ${this.statusMessage()}`,
+                    icon_url: Framework.getClient().user!.avatarURL()
                 },
                 image: {
                     url: `https://i3.ytimg.com/vi/${song.info.video_id}/maxresdefault.jpg`,
@@ -68,7 +68,7 @@ export class MusicMessagePlayer extends EventEmitter {
                     },
                     {
                         name: "Time",
-                        value: this.session.dispatcher ? parseDuration(this.session.timeOffset + (this.session.dispatcher.time / 1000)) : 0,
+                        value: this.session.dispatcher ? parseDuration(this.session.timeOffset + (this.session.dispatcher.streamTime / 1000)) : 0,
                     }
                 ],
                 timestamp: new Date(),
@@ -101,7 +101,7 @@ export class MusicMessagePlayer extends EventEmitter {
 
     private async createListeners() {
         this.listener = Reactions.listen(this.playerMessage!, reaction => {
-            if (reaction.member == this.playerMessage!.guild.member(Framework.getClient().user)) return;
+            if (reaction.member == this.playerMessage!.guild!.member(Framework.getClient().user!)) return;
 
             let number = this.reactions.indexOf(reaction.emoji);
             if (number < 0) return;
@@ -113,7 +113,7 @@ export class MusicMessagePlayer extends EventEmitter {
 
     private bindActions() {
         let seekOffset = (offset: number) => {
-            let resultTime = (this.session.timeOffset + this.session.dispatcher!.time / 1000 + offset);
+            let resultTime = (this.session.timeOffset + this.session.dispatcher!.streamTime / 1000 + offset);
             resultTime = _.clamp(resultTime, 0, parseInt(this.session.currentlyPlaying!.info.length_seconds));
             return resultTime.toFixed(0);
         };

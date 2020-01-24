@@ -1,13 +1,14 @@
-import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Role } from 'discord.js';
+import { Message, GuildMember, Guild, TextChannel, DMChannel, Role } from 'discord.js';
 import { Command } from './command';
 import { Parser } from '@core/internal/parser';
+import { PartialMessage } from 'discord.js';
 
 export class Input {
 
     public message: Message;
     public member: GuildMember;
     public guild: Guild;
-    public channel: TextChannel | DMChannel | GroupDMChannel;
+    public channel: TextChannel | DMChannel;
 
     private command?: Command;
     private prefix: string = '';
@@ -19,12 +20,12 @@ export class Input {
     private error: Error|undefined;
     private resolver: Promise<void> | undefined;
 
-    constructor(message: Message) {
+    constructor(message: Message | PartialMessage) {
         // Extract basic message properties
-        this.message = message;
-        this.member = message.member;
-        this.guild = message.guild;
-        this.channel = message.channel;
+        this.message = <Message>message;
+        this.member = message.member!;
+        this.guild = message.guild!;
+        this.channel = message.channel!;
 
         // Start the parser
         this.parse();
@@ -35,10 +36,10 @@ export class Input {
      */
     private parse() {
         // Extract prefix
-        this.prefix = this.message.content.substring(0, 1);
+        this.prefix = this.message.content!.substring(0, 1);
 
         // Extract command name and text
-        let content = this.message.content.substring(1) + ' ';
+        let content = this.message.content!.substring(1) + ' ';
         let space = content.indexOf(' ');
         this.commandName = content.substring(0, space);
         this.text = content.substring(space).trim();

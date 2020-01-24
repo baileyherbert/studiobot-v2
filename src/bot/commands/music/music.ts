@@ -1,11 +1,11 @@
 import {Command, Input} from '@api';
 import {Emoji} from "@libraries/emoji";
-import {TextChannel, VoiceChannel} from "discord.js";
+import {TextChannel} from "discord.js";
 import {Session} from "@libraries/music/session";
 
-let trackedGuilds: { [id: string]: Session } = {};
-
 export class Music extends Command {
+    private trackedGuilds: { [id: string]: Session } = {};
+
     constructor() {
         super({
             name: 'music',
@@ -50,7 +50,7 @@ export class Music extends Command {
         let options = input.getArgument('options') as string | undefined;
 
         // Get the users voice channel
-        let userVoiceChannel: VoiceChannel = input.member.voiceChannel;
+        let userVoiceChannel = input.member.voice.channel;
 
         if (!userVoiceChannel) {
             await input.message.reply(`${Emoji.ERROR} You must be in a voice channel to use this command`);
@@ -59,7 +59,8 @@ export class Music extends Command {
 
         // Get the guilds music data configuration
         let id = input.guild.id;
-        let session = trackedGuilds[id] ? trackedGuilds[id] : trackedGuilds[id] = new Session(input.guild, input.channel as TextChannel);
+        let session = (id in this.trackedGuilds) ? this.trackedGuilds[id] : new Session(input.guild, input.channel as TextChannel);
+        this.trackedGuilds[id] = session;
         session.channel = input.channel as TextChannel;
 
         switch (action) {

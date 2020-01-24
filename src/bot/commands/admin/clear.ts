@@ -169,12 +169,13 @@ export class Clear extends Command {
         let buffer : Collection<Snowflake, Message>;
         let twoWeeksAgo = !forced ? (_.now() - (86400 * 7 * 1000) + 300000) : 0;
 
-        while ((buffer = await channel.fetchMessages({ before: before, limit: 100 })).size > 0) {
+        while ((buffer = await channel.messages.fetch({ before: before, limit: 100 })).size > 0) {
             let eligible = buffer.filter(message => message.createdTimestamp > twoWeeksAgo);
+            let last = eligible.last();
 
             eligible.forEach(msg => results.push(msg));
 
-            if (eligible.last()) before = eligible.last().id;
+            if (last) before = last.id;
             if (eligible.size < 100) break;
             if (limit && results.length >= limit) break;
         }

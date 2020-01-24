@@ -59,10 +59,12 @@ export class Framework {
                 if (commandsLoaded) return this.getLogger().info('Reconnected.');
                 commandsLoaded = true;
 
+                let user = this.client.user!;
+
                 this.logger.clear();
-                this.logger.info('Logged in as %s.', this.client.user.tag);
-                this.logger.debug('Logged in with Client Id: %s', this.client.user.id);
-                this.logger.verbose('This client is a %s.', this.client.user.bot ? 'bot' : 'user');
+                this.logger.info('Logged in as %s.', user.tag);
+                this.logger.debug('Logged in with Client Id: %s', user.id);
+                this.logger.verbose('This client is a %s.', user.bot ? 'bot' : 'user');
                 this.logger.verbose('Found %d channels across %d guilds.', this.client.channels.size, this.client.guilds.size);
                 this.logger.debug('Loading components...');
 
@@ -111,14 +113,14 @@ export class Framework {
      * Sets the activity of the client.
      */
     public static setActivity(message: string, type: 'PLAYING' | 'STREAMING' | 'WATCHING' | 'LISTENING' = 'PLAYING') {
-        return this.client.user.setActivity(message, { type: type });
+        return this.client.user!.setActivity(message, { type: type });
     }
 
     /**
      * Sets the status of the client.
      */
     public static setStatus(status: 'online' | 'idle' | 'invisible' | 'dnd') {
-        return this.client.user.setStatus(status);
+        return this.client.user!.setStatus(status);
     }
 
     /**
@@ -504,11 +506,14 @@ export class Framework {
 
         this.client.on('message', async message => {
             // Only listen to text channels on guilds
-            if (message.channel.type !== 'text') return;
+            if (!message.channel || message.channel.type !== 'text') return;
 
             // Get the guild and member
             let member = message.member;
             let guild = message.guild;
+
+            if (!guild) return;
+            if (!member) return;
 
             // Load guild settings
             if (!guild.settings) {
@@ -516,7 +521,7 @@ export class Framework {
             }
 
             // Skip bots and non-commands
-            if (!message.content.startsWith(guild.settings.prefix)) return;
+            if (!message.content || !message.content.startsWith(guild.settings.prefix)) return;
             if (member.user.bot) return;
 
             // Load member settings
@@ -557,7 +562,8 @@ export class Framework {
                                     this.logger.error(error);
                                     this.reportException(error);
 
-                                    input.channel.send(':tools:  Internal error, check console.');
+                                    if (this.getEnvironment() == 'test') input.channel.send(':tools:  Internal error, check console.');
+                                    else input.channel.send(':tools:  Sorry, I ran into an error.');
                                 });
                             }
                         }

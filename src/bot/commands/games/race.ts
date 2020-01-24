@@ -107,7 +107,7 @@ export class Race extends Command {
         // If nobody else joined, add the bot
         if (race.members.length == 1) {
             race.members.push({
-                member: input.guild.members.get(Framework.getClient().user.id)!,
+                member: input.guild.members.get(Framework.getClient().user!.id)!,
                 animal: this.pickAnimal(race),
                 distance: 0,
                 injured: 0

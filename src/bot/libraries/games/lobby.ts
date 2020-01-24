@@ -1,4 +1,4 @@
-import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Role } from 'discord.js';
+import { Message, GuildMember, Guild, TextChannel, DMChannel } from 'discord.js';
 import { LobbyManager } from '@bot/libraries/games/lobby-manager';
 import { Logger } from '@core/bot/logger';
 
@@ -6,7 +6,7 @@ export abstract class Lobby {
     protected player1 : GuildMember | null;
     protected player2 : GuildMember | null;
 
-    protected lobbyChannel : TextChannel | DMChannel | GroupDMChannel;
+    protected lobbyChannel : TextChannel | DMChannel;
     protected lobbyServer : Guild;
 
     protected lobbyManager : LobbyManager;
@@ -15,7 +15,7 @@ export abstract class Lobby {
 
     protected abort : boolean;
 
-    constructor (server: Guild, channel: TextChannel | DMChannel | GroupDMChannel, manager: LobbyManager, lobbyTypeName : string, player1: GuildMember | null = null, player2: GuildMember | null = null){
+    constructor (server: Guild, channel: TextChannel | DMChannel, manager: LobbyManager, lobbyTypeName : string, player1: GuildMember | null = null, player2: GuildMember | null = null){
         this.player1 = player1;
         this.player2 = player2;
 
@@ -46,7 +46,7 @@ export abstract class Lobby {
 
     abstract GameLoop() : void;
 
-    GetLobbyChannel() : TextChannel | DMChannel | GroupDMChannel {
+    GetLobbyChannel() : TextChannel | DMChannel {
         return this.lobbyChannel;
     }
 

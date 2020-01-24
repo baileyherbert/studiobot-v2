@@ -16,10 +16,13 @@ export class CleverbotListener extends Listener
      * @param message
      */
     async onMessage(message: Message) {
-        if (message.channel.type != 'text') return;
-        if (message.member.user.bot) return;
+        let member = message.member;
 
-        let myId = Framework.getClient().user.id;
+        if (message.channel.type != 'text') return;
+        if (!member) return;
+        if (member.user.bot) return;
+
+        let myId = Framework.getClient().user!.id;
         let exp = new RegExp('^<@!?' + myId + '>\\s+(.+)$');
         let matches = exp.exec(message.content);
 
@@ -28,8 +31,8 @@ export class CleverbotListener extends Listener
             let conversation = this.getConversation(message.channel.id);
 
             // Debugging
-            let serverId = (Framework.getEnvironment() == 'production') ? `${chalk.gray(message.guild.name)}: ` : '';
-            Framework.getLogger().info(`${serverId}${message.member.user.tag} said: ${content}`);
+            let serverId = (Framework.getEnvironment() == 'production') ? `${chalk.gray(message.guild!.name)}: ` : '';
+            Framework.getLogger().info(`${serverId}${member.user.tag} said: ${content}`);
 
             // If we don't get a conversation back, then the bot isn't capable of talking
             if (!conversation) {
@@ -53,7 +56,7 @@ export class CleverbotListener extends Listener
                 await message.channel.send(`:speech_balloon:  ${message.member} ${response}`);
 
                 // Debugging
-                Framework.getLogger().info(`${serverId}Responded to ${message.member.user.tag}: ${response}`);
+                Framework.getLogger().info(`${serverId}Responded to ${member.user.tag}: ${response}`);
             }
             catch (error) {
                 this.getLogger().error('Error occurred when running cleverscript:');

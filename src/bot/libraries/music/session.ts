@@ -48,8 +48,11 @@ export class Session {
     async playQueue(video: SongInfo) {
         this.queue.push(video);
 
+        let channel = video.requester.voice.channel;
+        if (!channel) return await video.textChannel.send(`Failed to join voice channel.`);
+
         if (!this.connection) {
-            this.connection = await video.requester.voiceChannel.join();
+            this.connection = await channel.join();
             this.currentlyPlaying = this.queue.shift();
             await this.startStream();
         }
@@ -106,13 +109,12 @@ export class Session {
         this.timeOffset = t;
 
         this.skipping = true;
-        this.dispatcher = await this.connection.playFile(this.currentlyPlaying.file,
-            {
-                seek: t,
-                volume: defaultVolume,
-                passes: 10,
-                bitrate: 96000
-            });
+        this.dispatcher = this.connection.play(this.currentlyPlaying.file, {
+            seek: t,
+            volume: 1,
+            bitrate: 'auto'
+        });
+
         this.dispatcher.setVolume(defaultVolume);
         this.createListeners();
         // await this.messagePlayer!.update(this.currentlyPlaying);
@@ -277,9 +279,11 @@ export class Session {
             return await this.channel.send(`${Emoji.ERROR} Must specify a url or search term to use this command`);
         }
 
-        let url = validateURL(options) ? options : (await searchyt(options))[0].url;
+        input.message.channel.startTyping();
 
+        let url = validateURL(options) ? options : (await searchyt(options))[0].url;
         await this.playUrl(url, input.member);
+        input.message.channel.stopTyping();
     }
 
     async autoplay(options: string | undefined) {

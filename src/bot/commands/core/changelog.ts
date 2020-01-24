@@ -2,7 +2,7 @@ import { Command, Input } from '@api';
 import { Framework } from '@core/framework';
 import fs from 'fs';
 import { Emoji } from '@bot/libraries/emoji';
-import { RichEmbed } from 'discord.js';
+import { MessageEmbed } from 'discord.js';
 import moment from 'moment';
 
 export class Changelog extends Command {
@@ -82,7 +82,7 @@ export class Changelog extends Command {
         }
 
         // Send the embed in output
-        await input.channel.send(new RichEmbed({
+        await input.channel.send(new MessageEmbed({
             description: description.trim() + '\n\u200b',
             color: 0x1c7ed6,
             timestamp: moment(data.timestamp).toDate(),

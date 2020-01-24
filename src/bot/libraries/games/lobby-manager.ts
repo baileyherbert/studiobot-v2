@@ -1,4 +1,4 @@
-import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Role } from 'discord.js';
+import { Guild, TextChannel, DMChannel } from 'discord.js';
 import { Lobby } from '@bot/libraries/games/lobby'
 
 export class LobbyManager {
@@ -45,7 +45,7 @@ export class LobbyManager {
         return this.lobbies;
     }
 
-    GetLobbiesInChannel(server: Guild, channel: TextChannel | DMChannel | GroupDMChannel) : Lobby[]{
+    GetLobbiesInChannel(server: Guild, channel: TextChannel | DMChannel) : Lobby[]{
         let lobbiesInServer = [];
 
         for (let index = 0; index < this.lobbies.length; index++){

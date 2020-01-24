@@ -16,14 +16,16 @@ export function searchyt(searchTerm: string): Promise<{ title: string, url: stri
                 let results = $('h3.yt-lockup-title a');
                 results.each((index: number, element: CheerioElement) => {
                     let row = $(element);
+                    let href = row.attr('href');
 
-                    if (!(/\/watch\?v=([\w-]+)/.test(row.attr('href')))) return;
+                    if (!href) return;
+                    if (!(/\/watch\?v=([\w-]+)/.test(href))) return;
 
                     let title = row.text();
-                    let url = row.attr('href');
 
-                    ytresults.push({title, url});
-                    // console.log(title, url);
+                    ytresults.push({
+                        title, url: href
+                    });
                 });
 
                 resolve(ytresults);

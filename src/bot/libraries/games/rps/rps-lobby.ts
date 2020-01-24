@@ -1,4 +1,4 @@
-import { Message, GuildMember, Guild, TextChannel, DMChannel, GroupDMChannel, Role, MessageReaction, ReactionCollector, Client } from 'discord.js';
+import { Message, GuildMember, Guild, TextChannel, DMChannel, MessageReaction } from 'discord.js';
 import { LobbyManager } from '@bot/libraries/games/lobby-manager';
 import { Logger } from '@core/bot/logger';
 import { Lobby } from '@bot/libraries/games/lobby';
@@ -30,9 +30,9 @@ export class RPSLobby extends Lobby {
     private p1Selection : string;
     private p2Selection : string;
 
-    constructor (server: Guild, channel: TextChannel | DMChannel | GroupDMChannel, manager: LobbyManager, player1: GuildMember | null = null, player2: GuildMember | null = null){
+    constructor (server: Guild, channel: TextChannel | DMChannel, manager: LobbyManager, player1: GuildMember | null = null, player2: GuildMember | null = null){
         super(server, channel, manager, "Rock-Paper-Scissors", player1, player2);
-        
+
         //string represents the option
         //string array represents what the option beats
         this.matchups = new Map<string, string[]>();
@@ -69,7 +69,7 @@ export class RPSLobby extends Lobby {
         const collector = this.lobbyChannel.createMessageCollector(filter);
 
         let self = this;
-        collector.once('collect', function(number){
+        collector.once('collect', function(number) {
             self.firstTo = Number.parseInt(number.content);
             self.SendInitialRpsDms().then(function() {
                 self.GameLoop();
@@ -124,7 +124,7 @@ export class RPSLobby extends Lobby {
     }
 
     GameLoop(): void {
-        this.InputLoop(this.player1 as GuildMember);        
+        this.InputLoop(this.player1 as GuildMember);
         this.InputLoop(this.player2 as GuildMember);
     }
 
@@ -156,7 +156,7 @@ export class RPSLobby extends Lobby {
         }
         let message = this.GetMessageByPlayer(player) as Message;
 
-        let filter = (reaction: MessageReaction) => 
+        let filter = (reaction: MessageReaction) =>
         this.IsReactionRPS(reaction) || this.EndCondition();
 
         if (message) {
@@ -176,7 +176,7 @@ export class RPSLobby extends Lobby {
         return (reaction.emoji.name === rpsEnums.RPSEnum.Rock ||
         reaction.emoji.name === rpsEnums.RPSEnum.Paper ||
         reaction.emoji.name === rpsEnums.RPSEnum.Scissors) &&
-        reaction.count > 1;
+        (reaction.count || 0) > 1;
     }
 
     async ProcessInput(player : GuildMember, input : MessageReaction){

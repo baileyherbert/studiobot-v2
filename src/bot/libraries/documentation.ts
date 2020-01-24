@@ -1,5 +1,5 @@
 import { Command } from "@api";
-import { RichEmbed } from "discord.js";
+import { MessageEmbed } from "discord.js";
 
 /**
  * This class is a helper library to generate help and usage information for commands.
@@ -85,7 +85,7 @@ export class Documentation {
     /**
      * Returns a string with the full detailed help information for a command.
      */
-    public static getCommandHelp(command: Command) : RichEmbed {
+    public static getCommandHelp(command: Command) : MessageEmbed {
         let fields = [{
             name: 'Usage',
             value: '`' + this.getInlineUsage(command) + '`'
@@ -108,7 +108,7 @@ export class Documentation {
         }
 
         // Build the embed
-        let embed = new RichEmbed({
+        let embed = new MessageEmbed({
             description: command.getDescription() + '\n',
             color: 0x1c7ed6,
             author: { name: 'Help for ' + command.getName() },

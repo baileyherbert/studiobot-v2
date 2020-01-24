@@ -11,7 +11,7 @@ export class Uptime extends Command {
     }
 
     execute(input: Input) {
-        let onlineSince = _.now() - Framework.getClient().uptime;
+        let onlineSince = _.now() - Framework.getClient().uptime!;
         let m = moment(onlineSince);
         let online = m.fromNow(true);
 

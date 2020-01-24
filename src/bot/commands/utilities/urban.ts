@@ -1,7 +1,7 @@
 import { Command, Input } from '@api';
 import request from 'request';
 import { Emoji } from '@bot/libraries/emoji';
-import { RichEmbed } from 'discord.js';
+import { MessageEmbed } from 'discord.js';
 
 export class UrbanDictionary extends Command {
     constructor() {
@@ -42,7 +42,7 @@ export class UrbanDictionary extends Command {
                 });
 
                 // Send embed
-                await input.channel.send(new RichEmbed({
+                await input.channel.send(new MessageEmbed({
                     title: `${query.capitalize()}`,
                     author: {
                         icon_url: 'https://firebounty.com/image/635-urban-dictionary',

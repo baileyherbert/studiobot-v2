@@ -10,7 +10,7 @@ export class Ping extends Command {
     }
 
     execute(input: Input) {
-        let ping = Framework.getClient().ping.toPrecision(4);
+        let ping = Framework.getClient().ws.ping.toPrecision(4);
 
         input.channel.send(`:satellite:  Bot's current ping is **${ping} ms**.`);
     }

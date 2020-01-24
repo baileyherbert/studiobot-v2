@@ -9,7 +9,7 @@ export class VideoDownloader extends EventEmitter {
         super();
         url = url.replace(/^.+\.com\//, '');
 
-        let dirPath = path.resolve(__dirname, server.guild.id);
+        let dirPath = path.resolve(rootpath('data/tmp'), server.guild.id);
 
         try {
             fs.mkdirSync(dirPath)
@@ -27,7 +27,7 @@ export class VideoDownloader extends EventEmitter {
             // container: 'mp4',
             // audioEncoding: 'aac'
             // }
-            // highWaterMark: 1024 * 1024 * 10 // 10 megabytes
+            highWaterMark: 1024 * 1024 * 10 // 10 megabytes
         });
 
         video.pipe(fs.createWriteStream(output));
