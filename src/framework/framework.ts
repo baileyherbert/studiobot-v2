@@ -562,7 +562,8 @@ export class Framework {
                                     this.logger.error(error);
                                     this.reportException(error);
 
-                                    input.channel.send(':tools:  Internal error, check console.');
+                                    if (this.getEnvironment() == 'test') input.channel.send(':tools:  Internal error, check console.');
+                                    else input.channel.send(':tools:  Sorry, I ran into an error.');
                                 });
                             }
                         }
